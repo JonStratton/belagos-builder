@@ -1,9 +1,10 @@
 #!/usr/bin/expect -f
-
 # Installing 9front usually just pounding return unless there is "no default". Then you choose the first item. If you see ">>>", just type w\rq\r
 
+set installer [lindex $argv 0]
+
 set timeout -1
-spawn qemu-system-x86_64 -m 512 -netdev tap,id=eth,ifname=tap0,script=no,downscript=no -device e1000,netdev=eth,mac=52:54:00:00:EE:03 -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_dhcp.qcow2.img -device scsi-hd,drive=vd0 -drive if=none,id=vd1,file=9front-8013.d9e940a768d1.amd64.iso -device scsi-cd,drive=vd1,bootindex=0 -curses
+spawn $installer
 expect "bootargs is *"
 send "\r"
 expect "user*:*"

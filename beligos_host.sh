@@ -61,11 +61,12 @@ mkdir qemu; cd qemu
 wget http://9front.org/iso/9front-8013.d9e940a768d1.amd64.iso.gz
 gunzip 9front-8013.d9e940a768d1.amd64.iso.gz
 
-# TODO, debian yggdrasil node 
-
-qemu-img create -f qcow2 9front_dhcp.qcow2.img 10G
-echo "qemu-system-x86_64 -cpu host -enable-kvm -m 1024 -netdev tap,id=eth,ifname=tap0,script=no,downscript=no -device e1000,netdev=eth,mac=52:54:00:00:EE:03 -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_dhcp.qcow2.img -device scsi-hd,drive=vd0 -drive if=none,id=vd1,file=9front-8013.d9e940a768d1.amd64.iso -device scsi-cd,drive=vd1,bootindex=0" > install_9front1.sh
-echo "qemu-system-x86_64 -cpu host -enable-kvm -m 1024 -netdev tap,id=eth,ifname=tap0,script=no,downscript=no -device e1000,netdev=eth,mac=52:54:00:00:EE:03 -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_dhcp.qcow2.img -device scsi-hd,drive=vd0 -vga std" > run_9front1.sh
+# Creating with "-net user" so we can do it before reboot. Just make sure to keep the MAC addresses the same
+echo "qemu-img create -f qcow2 9front_test1.qcow2.img 10G
+qemu-system-x86_64 -m 512 -net nic,model=virtio,macaddr=52:54:00:00:EE:03 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_test1.qcow2.img -device scsi-hd,drive=vd0 -drive if=none,id=vd1,file=9front-8013.d9e940a768d1.amd64.iso -device scsi-cd,drive=vd1,bootindex=0 -curses" > install_9front_test1.sh
+chmod u+x install_9front_test1.sh
+echo "qemu-system-x86_64 -m 512 -netdev tap,id=eth,ifname=tap0,script=no,downscript=no -device e1000,netdev=eth,mac=52:54:00:00:EE:03 -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_test1.qcow2.img -device scsi-hd,drive=vd0 -vga std" > run_test1.sh
+chmod u+x run_test1.sh
 }
 
 #############
