@@ -1,6 +1,6 @@
 #!/bin/sh
 
-package_list="dnsmasq iptables-persistent diod qemu-system-x86"
+package_list="dnsmasq iptables-persistent qemu-system-x86 vde2 uml-utilities"
 
 ###########
 # Install #
@@ -18,23 +18,23 @@ done
 echo $new_packages > ./new_packages.txt
 
 # Create tap0 interface for our VM Network
-sudo groupadd beligos
-sudo usermod -a -G beligos $USER
+sudo usermod -a -G vde2-net $USER
 sudo sh -c '( echo "auto tap0
 iface tap0 inet static
    address 192.168.9.1
    netmask 255.255.255.0
-   pre-up ip tuntap add dev tap0 mode tap group beligos
-   pre-up ip link set tap0 up
-   post-down ip link set tap0 down
-   post-down ip tuntap del dev tap0 mode tap
-iface tap0 inet6 manual" > /etc/network/interfaces.d/tap0.iface )'
+   vde2-switch -t tap0" > /etc/network/interfaces.d/tap0.iface )'
 
 # Create dnsmasq config for tap0 with some hard coded MACs to IP
 sudo sh -c '( echo "interface=tap0
 dhcp-option=3,192.168.9.1
 dhcp-range=192.168.9.100,192.168.9.200,255.255.255.0,24h
-dhcp-host=52:54:00:00:EE:03,192.168.9.3" > /etc/dnsmasq.d/beligos-dnsmasq.conf )'
+dhcp-host=52:54:00:00:EE:03,192.168.9.3
+dhcp-host=52:54:00:00:EE:04,192.168.9.4
+local=/localgrid/
+expand-hosts
+address=/cpuserve.localgrid/192.168.9.3
+address=/fsserve.localgrid/192.168.9.4" > /etc/dnsmasq.d/beligos-dnsmasq.conf )'
 
 # IP Tables; allow tap0 to talk to the outside via ethernet
 sudo cp /etc/iptables/rules.v4 /etc/iptables/rules.v4_back
@@ -48,25 +48,17 @@ sudo sh -c '( iptables-save > /etc/iptables/rules.v4 )'
 sudo sh -c '( echo "net.ipv4.ip_forward = 1
 net.ipv6.ip_forward = 1" > /etc/sysctl.d/beligos-sysctl.conf )'
 
-# Diod, for file sharing between VMs. Only listen on tap0, or we might have a problem.
-sudo sh -c '( cat /etc/default/diod | sed "s/DIOD_ENABLE=false/DIOD_ENABLE=true/g" > /etc/default/diod2 )'
-sudo mv /etc/default/diod2 /etc/default/diod
-sudo sh -c '( echo "listen = { \"192.168.9.1:564\" }
-exports = {
-   { path=\"/tmp/TODO/\", opts=\"ro,noauth\" }
-}" > /etc/diod.conf )'
-
 # Prep the VMs
 mkdir qemu; cd qemu
 wget http://9front.org/iso/9front-8013.d9e940a768d1.amd64.iso.gz
 gunzip 9front-8013.d9e940a768d1.amd64.iso.gz
 
 # Creating with "-net user" so we can do it before reboot. Just make sure to keep the MAC addresses the same
-echo "qemu-img create -f qcow2 9front_test1.qcow2.img 10G
-qemu-system-x86_64 -m 512 -net nic,model=virtio,macaddr=52:54:00:00:EE:03 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_test1.qcow2.img -device scsi-hd,drive=vd0 -drive if=none,id=vd1,file=9front-8013.d9e940a768d1.amd64.iso -device scsi-cd,drive=vd1,bootindex=0 -curses" > install_9front_test1.sh
-chmod u+x install_9front_test1.sh
-echo "qemu-system-x86_64 -m 512 -netdev tap,id=eth,ifname=tap0,script=no,downscript=no -device e1000,netdev=eth,mac=52:54:00:00:EE:03 -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_test1.qcow2.img -device scsi-hd,drive=vd0 -vga std" > run_test1.sh
-chmod u+x run_test1.sh
+echo "qemu-img create -f qcow2 9front_cpuserve.qcow2.img 10G
+qemu-system-x86_64 -m 512 -net nic,model=virtio,macaddr=52:54:00:00:EE:03 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_cpuserve.qcow2.img -device scsi-hd,drive=vd0 -drive if=none,id=vd1,file=9front-8013.d9e940a768d1.amd64.iso -device scsi-cd,drive=vd1,bootindex=0 -curses" > install_9front_cpuserve.sh
+chmod u+x install_9front_cpuserve.sh
+echo "qemu-system-x86_64 -m 512 -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_cpuserve.qcow2.img -device scsi-hd,drive=vd0 -vga std" > run_cpuserve.sh
+chmod u+x run_cpuserve.sh
 }
 
 #############
