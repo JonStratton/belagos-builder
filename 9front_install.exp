@@ -1,10 +1,19 @@
 #!/usr/bin/expect -f
 # Installing 9front usually just pounding return unless there is "no default". Then you choose the first item. If you see ">>>", just type w\rq\r
 
-set installer [lindex $argv 0]
+set img [lindex $argv 0]
+set ram [lindex $argv 1]
+set iso [lindex $argv 2]
+set size [lindex $argv 3]
 
 set timeout -1
-spawn $installer
+
+# Make base disk.
+spawn qemu-img create -f qcow2 $img $size
+expect eof
+
+# Install base system. Use "-net user" so we can do this before rebooting
+spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=52:54:00:00:EE:01 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -drive if=none,id=vd1,file=$iso -device scsi-cd,drive=vd1,bootindex=0 -curses
 expect "bootargs is *"
 send "\r"
 expect "user*:*"
@@ -60,7 +69,7 @@ send "\r"
 expect "Task to do *:*"
 send "\r"
 expect "sysname *:*"
-send "cpuserve\r"
+send "cirno\r"
 expect "Task to do *:*"
 send "\r"
 expect ", WET*:*"

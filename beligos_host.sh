@@ -49,7 +49,6 @@ sudo sh -c '( echo "net.ipv4.ip_forward = 1
 net.ipv6.ip_forward = 1" > /etc/sysctl.d/beligos-sysctl.conf )'
 
 # Prep the VMs
-mkdir qemu; cd qemu
 wget http://9front.org/iso/9front-8013.d9e940a768d1.amd64.iso.gz
 gunzip 9front-8013.d9e940a768d1.amd64.iso.gz
 
@@ -57,7 +56,9 @@ gunzip 9front-8013.d9e940a768d1.amd64.iso.gz
 echo "qemu-img create -f qcow2 9front_cpuserve.qcow2.img 10G
 qemu-system-x86_64 -m 512 -net nic,model=virtio,macaddr=52:54:00:00:EE:03 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_cpuserve.qcow2.img -device scsi-hd,drive=vd0 -drive if=none,id=vd1,file=9front-8013.d9e940a768d1.amd64.iso -device scsi-cd,drive=vd1,bootindex=0 -curses" > install_9front_cpuserve.sh
 chmod u+x install_9front_cpuserve.sh
-echo "qemu-system-x86_64 -m 512 -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_cpuserve.qcow2.img -device scsi-hd,drive=vd0 -vga std" > run_cpuserve.sh
+
+expect 9front_install.exp 9front_base.img 10G 512 52:54:00:00:EE:01 9front-8013.d9e940a768d1.amd64.iso base
+echo "qemu-system-x86_64 -m 512 -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_cpuserve.qcow2.img -device scsi-hd,drive=vd0 -curses" > run_cpuserve.sh
 chmod u+x run_cpuserve.sh
 }
 

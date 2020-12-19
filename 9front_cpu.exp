@@ -1,6 +1,17 @@
 #!/usr/bin/expect -f
 # https://nicolasmontanaro.com/blog/9front-guide/
 
+proc get_keepass { pass title type } {
+   set channel [open "|kpcli --kdb beligos.kdbx -c \"show -f beligos/$title\" | grep \"$type:\" | cut -d: -f2 | cut -b2-" r+]
+   puts $channel "$pass"
+   flush $channel
+   return [gets $channel]
+}
+
+puts "Enter new password for keepass(beligos.kdbx)\[echoed\]: "
+gets stdin keepass_pass
+set glenda_pass [get_keepass $keepass_pass "glenda" "Pass"]
+
 set runner [lindex $argv 0]
 
 set timeout -1
@@ -29,7 +40,7 @@ send "localgrid\r"
 expect "secstore key:*"
 send "\r"
 expect "password:*"
-send "changeme\r"
+send "$glenda_pass\r"
 expect "*# "
 send "fshalt\r"
 expect "*# "
