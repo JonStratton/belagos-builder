@@ -34,7 +34,7 @@ dhcp-host=52:54:00:00:EE:04,192.168.9.4
 local=/localgrid/
 expand-hosts
 address=/cpuserve.localgrid/192.168.9.3
-address=/fsserve.localgrid/192.168.9.4" > /etc/dnsmasq.d/beligos-dnsmasq.conf )'
+address=/fsserve.localgrid/192.168.9.4" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
 
 # IP Tables; allow tap0 to talk to the outside via ethernet
 sudo cp /etc/iptables/rules.v4 /etc/iptables/rules.v4_back
@@ -46,9 +46,9 @@ sudo iptables -A FORWARD -i tap0 -o $eth0 -j ACCEPT
 sudo sh -c '( iptables-save > /etc/iptables/rules.v4 )'
 
 sudo sh -c '( echo "net.ipv4.ip_forward = 1
-net.ipv6.ip_forward = 1" > /etc/sysctl.d/beligos-sysctl.conf )'
+net.ipv6.ip_forward = 1" > /etc/sysctl.d/belagos-sysctl.conf )'
 
-# Create keepass db(beligos.kdbx) so we dont have to default passwords.
+# Create keepass db(belagos.kdbx) so we dont have to default passwords.
 expect keepass.exp
 
 # Prep the VMs
@@ -81,8 +81,8 @@ sudo mv /etc/iptables/rules.v4_back /etc/iptables/rules.v4
 sudo mv /etc/iptables/rules.v6_back /etc/iptables/rules.v6
 
 sudo rm /etc/network/interfaces.d/tap0.iface
-sudo rm /etc/dnsmasq.d/beligos-dnsmasq.conf
-sudo rm /etc/sysctl.d/beligos-sysctl.conf
+sudo rm /etc/dnsmasq.d/belagos-dnsmasq.conf
+sudo rm /etc/sysctl.d/belagos-sysctl.conf
 
 # Remove Packages
 sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./new_packages.txt`
