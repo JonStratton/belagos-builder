@@ -12,14 +12,21 @@ puts "Enter new password for keepass(beligos.kdbx)\[echoed\]: "
 gets stdin keepass_pass
 set glenda_pass [get_keepass $keepass_pass "glenda" "Pass"]
 
-set runner [lindex $argv 0]
+set img [lindex $argv 0]
+set ram [lindex $argv 1]
+set hostname [lindex $argv 2]
+set mac [lindex $argv 3]
+set mac2 [lindex $argv 4]
 
+# Reset the hostname and MAC, then turn on CPU service
 set timeout -1
-spawn $runner
+spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=$mac -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -curses
 expect "bootargs is *"
 send "\r"
 expect "user*:*"
 send "\r"
+expect "term% "
+send "cat /lib/ndb/local | sed 's/sys=cirno/sys=$hostname/g' | sed 's/ether=52540000ee01/ether=$mac2/g' > /lib/ndb/local2; mv /lib/ndb/local2 /lib/ndb/local\r"
 expect "term% "
 send "9fs 9fat; echo 'service=cpu' >>/n/9fat/plan9.ini\r"
 expect "term% "
@@ -30,7 +37,8 @@ expect "(qemu)"
 send "quit\r"
 expect eof
 
-spawn $runner
+
+spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=$mac -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -curses
 expect "bootargs is *"
 send "\r"
 expect "authid:*"
@@ -49,7 +57,8 @@ expect "(qemu)"
 send "quit\r"
 expect eof
 
-spawn $runner
+# Turn on auth
+spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=$mac -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -curses
 expect "bootargs is *"
 send "local!/dev/sd00/fscache -c\r"
 expect "config:*"
