@@ -13,8 +13,9 @@ spawn qemu-img create -f qcow2 $img $size
 expect eof
 
 # Install base system. Use "-net user" so we can do this before rebooting
-spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=52:54:00:00:EE:01 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -drive if=none,id=vd1,file=$iso -device scsi-cd,drive=vd1,bootindex=0 -curses
+spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=52:54:00:00:EE:03 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -drive if=none,id=vd1,file=$iso -device scsi-cd,drive=vd1,bootindex=0 -curses
 expect "bootargs is *"
+sleep 2
 send "\r"
 expect "user*:*"
 send "\r"
@@ -69,7 +70,7 @@ send "\r"
 expect "Task to do *:*"
 send "\r"
 expect "sysname *:*"
-send "cirno\r"
+send "fsserve\r"
 expect "Task to do *:*"
 send "\r"
 expect ", WET*:*"

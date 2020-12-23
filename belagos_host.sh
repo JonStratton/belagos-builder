@@ -27,14 +27,15 @@ iface tap0 inet static
 
 # Create dnsmasq config for tap0 with some hard coded MACs to IP
 sudo sh -c '( echo "interface=tap0
-dhcp-option=3,192.168.9.1
-dhcp-range=192.168.9.100,192.168.9.200,255.255.255.0,24h
-dhcp-host=52:54:00:00:EE:03,192.168.9.3
-dhcp-host=52:54:00:00:EE:04,192.168.9.4
+domain=localgrid
 local=/localgrid/
 expand-hosts
-address=/cpuserve.localgrid/192.168.9.3
-address=/fsserve.localgrid/192.168.9.4" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
+dhcp-option=3,192.168.9.1
+dhcp-range=192.168.9.100,192.168.9.200,255.255.255.0,24h
+dhcp-host=52:54:00:00:EE:03,fsserve,192.168.9.3
+dhcp-host=52:54:00:00:EE:04,authserve,192.168.9.4
+dhcp-host=52:54:00:00:EE:05,cpuserve,192.168.9.5
+address=/host.localgrid/192.168.9.1" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
 
 # IP Tables; allow tap0 to talk to the outside via ethernet
 sudo cp /etc/iptables/rules.v4 /etc/iptables/rules.v4_back
@@ -55,21 +56,37 @@ expect keepass.exp
 wget http://9front.org/iso/9front-8013.d9e940a768d1.amd64.iso.gz
 gunzip 9front-8013.d9e940a768d1.amd64.iso.gz
 
-# Creating base install image
-expect 9front_install.exp 9front_base.img 512 9front-8013.d9e940a768d1.amd64.iso 10G
-cp 9front_base.img 9front_cpuserve.img
-cp 9front_base.img 9front_fsserve.img
+# Small partition for our NVRAM for our Auth Server
+qemu-img create -f qcow2 9front_authserve.img 1M
 
-# Give new name and MAC, and turn on CPU serve for remote connections
-expect 9front_branch_and_cpu.exp 9front_cpuserve.img 512 cpuserve 52:54:00:00:EE:03 52540000ee03
-expect 9front_branch_and_cpu.exp 9front_fsserve.img 512 cpuserve 52:54:00:00:EE:04 52540000ee04
+# Creating base install image
+expect 9front_fsserve_install.exp 9front_fsserve.img 256 9front-8013.d9e940a768d1.amd64.iso 10G
+
+# Back it up as expect is unrelyable with curses
+cp 9front_fsserve.img 9front_fsserve.img_back
+
+# Set up networking and turn on PXE
+expect 9front_fsserve_configure.exp 9front_fsserve.img 256
 
 # Runner scripts for our VDE network after reboot
-echo "qemu-system-x86_64 -m 512 -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_cpuserve.img -device scsi-hd,drive=vd0 -curses" > run_cpuserve.sh
+echo "qemu-system-x86_64 -m 256 -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_fsserve.img -device scsi-hd,drive=vd0 -curses" > run_fsserve.sh
+chmod u+x run_authserve.sh
+
+# authserve and cpuserve should be PXE bootable at this point
+echo "qemu-system-x86_64 -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_authserve.img -device scsi-hd,drive=vd0 -boot n -curses" > run_authserve.sh
+chmod u+x run_fsserve.sh
+
+echo "qemu-system-x86_64 -m 256 -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -curses" > run_terminal.sh
 chmod u+x run_cpuserve.sh
 
-echo "qemu-system-x86_64 -m 512 -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_fsserve.img -device scsi-hd,drive=vd0 -curses" > run_cpuserve.sh
-chmod u+x run_fsserve.sh
+# You have to use 9front's Drawterm to connect to 9front it seems
+cd /opt/
+sudo wget https://code.9front.org/hg/drawterm/archive/tip.tar.gz
+sudo tar xzf tip.tar.gz
+sudo rm tip.tar.gz
+sudo mv drawterm-* drawterm
+cd drawterm
+sudo CONF=unix make
 }
 
 #############
