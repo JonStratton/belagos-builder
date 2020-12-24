@@ -16,27 +16,84 @@ set img [lindex $argv 0]
 set ram [lindex $argv 1]
 
 set timeout -1
-spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=52:54:00:00:EE:04 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -boot n -curses
-expect "bootargs is*"
-sleep 2
-send "\r"
+spawn qemu-system-x86_64 -m $ram -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -boot n -curses
+expect "authid:"
+send "glenda\r"
+expect "authdom:"
+send "localgrid\r"
+expect "secstore key:"
+send "$keepass_pass\r"
+expect "password:"
+send "$glenda_pass\r"
+expect "Password:"
+send "$keepass_pass\r"
+expect "Confirm password:"
+send "$keepass_pass\r"
 
-# Partition our small disl
-#disk/mbr /dev/sd00/data
-#disk/fdisk /dev/sd00/data
-#>>> a p0 0 1
-#disk/prep /dev/sd00/plan9
-#>>> a 9fat
-#disk/fdisk -p /dev/sd00/data > /dev/sd00/ctl
-
-#touch /dev/sd00/nvram
-#echo 'nvram=/dev/sd00/nvram' >> /cfg/pxe/52540000ee04
-
-expect "term% "
-
-# Halt
+# Create the nvram partition
+expect "authserve#"
+send "disk/mbr /dev/sd00/data\r"
+expect "authserve#"
+send "disk/fdisk /dev/sd00/data\r"
+expect ">>>"
+send "a p0 0 1\r"
+expect ">>>"
+send "w\r"
+expect ">>>"
+send "q\r"
+send "disk/prep /dev/sd00/plan9\r"
+expect ">>>"
+send "a nvram 2 2016\r"
+expect ">>>"
+send "w\r"
+expect ">>>"
+send "q\r"
+expect "authserve#"
+send "echo clear >/dev/sd00/nvram\r"
+expect "authserve#"
 send "fshalt\r"
-expect "term% "
+expect "authserve#"
+send "2"
+expect "(qemu)"
+send "quit\r"
+expect eof
+
+spawn qemu-system-x86_64 -m $ram -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -boot n -curses
+expect "authid:"
+send "glenda\r"
+expect "authdom:"
+send "localgrid\r"
+expect "secstore key:"
+send "$keepass_pass\r"
+expect "password:"
+send "$glenda_pass\r"
+expect "authserve#"
+
+# This time for real
+send "auth/changeuser glenda\r"
+expect "assign new*password*:"
+send "y\r"
+expect "Password:"
+send "$glenda_pass\r"
+expect "Confirm password:"
+send "$glenda_pass\r"
+expect "assign*POP*:"
+send "n\r"
+expect "Expiration*:"
+send "\r"
+expect "Post*:"
+send "\r"
+expect "*name:"
+send "\r"
+expect "Department*:"
+send "\r"
+expect "U*email address:"
+send "\r"
+expect "Spon*email address:"
+send "\r"
+expect "authserve#"
+send "fshalt\r"
+expect "authserve#"
 send "2"
 expect "(qemu)"
 send "quit\r"

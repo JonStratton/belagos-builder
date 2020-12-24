@@ -34,8 +34,9 @@ dhcp-option=3,192.168.9.1
 dhcp-range=192.168.9.100,192.168.9.200,255.255.255.0,24h
 dhcp-host=52:54:00:00:EE:03,fsserve,192.168.9.3
 dhcp-host=52:54:00:00:EE:04,authserve,192.168.9.4
-dhcp-host=52:54:00:00:EE:05,cpuserve,192.168.9.5
-address=/host.localgrid/192.168.9.1" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
+address=/host.localgrid/192.168.9.1
+address=/fsserve.localgrid/192.168.9.3
+address=/authserve.localgrid/192.168.9.4" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
 
 # IP Tables; allow tap0 to talk to the outside via ethernet
 sudo cp /etc/iptables/rules.v4 /etc/iptables/rules.v4_back
@@ -56,26 +57,25 @@ expect keepass.exp
 wget http://9front.org/iso/9front-8013.d9e940a768d1.amd64.iso.gz
 gunzip 9front-8013.d9e940a768d1.amd64.iso.gz
 
-# Small partition for our NVRAM for our Auth Server
-qemu-img create -f qcow2 9front_authserve.img 1M
-
+# FSSERVE
 # Creating base install image
 expect 9front_fsserve_install.exp 9front_fsserve.img 256 9front-8013.d9e940a768d1.amd64.iso 10G
-
 # Back it up as expect is unrelyable with curses
 cp 9front_fsserve.img 9front_fsserve.img_back
-
 # Set up networking and turn on PXE
 expect 9front_fsserve_configure.exp 9front_fsserve.img 256
-
 # Runner scripts for our VDE network after reboot
 echo "qemu-system-x86_64 -m 256 -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_fsserve.img -device scsi-hd,drive=vd0 -curses" > run_fsserve.sh
-chmod u+x run_authserve.sh
-
-# authserve and cpuserve should be PXE bootable at this point
-echo "qemu-system-x86_64 -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_authserve.img -device scsi-hd,drive=vd0 -boot n -curses" > run_authserve.sh
 chmod u+x run_fsserve.sh
 
+# AUTHSERVE
+# authserve and cpuserve should be PXE bootable at this point
+qemu-img create -f qcow2 9front_authserve.img 1M
+expect 9front_authserve_configure.exp 9front_authserve.img 256
+echo "qemu-system-x86_64 -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_authserve.img -device scsi-hd,drive=vd0 -boot n -curses" > run_authserve.sh
+chmod u+x run_authserve.sh
+
+# MISC
 echo "qemu-system-x86_64 -m 256 -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -curses" > run_terminal.sh
 chmod u+x run_cpuserve.sh
 

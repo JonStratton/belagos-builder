@@ -27,6 +27,8 @@ send "9fs 9fat; echo 'service=cpu' >>/n/9fat/plan9.ini\r"
 expect "term% "
 
 # Set up base networking
+#send "cat /lib/ndb/local | sed 's/sys=cirno/sys=fsserve/g' | sed 's/ether=52540000ee02/ether=52540000ee03/g' > /lib/ndb/local2; mv /lib/ndb/local2 /lib/ndb/local\r"
+#expect "term% "
 send "echo 'auth=authserve.localgrid authdom=localgrid' >> /lib/ndb/local\r"
 expect "term% "
 send "echo 'ipnet=localgrid ip=192.168.9.0 ipmask=255.255.255.0' >> /lib/ndb/local\r"
@@ -69,10 +71,12 @@ expect "term% "
 send "echo 'vgasize=text' >> /cfg/pxe/default\r"
 expect "term% "
 
-# PXE - Add entry for authserve
+# PXE - Add entry for authserve. Authserve needs its own nvram disk, however
 send "cp /cfg/pxe/default /cfg/pxe/52540000ee04\r"
 expect "term% "
 send "echo 'service=cpu' >> /cfg/pxe/52540000ee04\r"
+expect "term% "
+send "echo 'nvram=/dev/sd00/nvram' >> /cfg/pxe/52540000ee04\r"
 expect "term% "
 send "echo >> /lib/ndb/local\r"
 expect "term% "
