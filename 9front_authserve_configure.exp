@@ -71,8 +71,8 @@ expect "authserve#"
 
 # This time for real
 send "auth/changeuser glenda\r"
-expect "assign new*password*:"
-send "y\r"
+#expect "assign new*password*:"
+#send "y\r"
 expect "Password:"
 send "$glenda_pass\r"
 expect "Confirm password:"

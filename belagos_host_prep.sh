@@ -34,9 +34,11 @@ dhcp-option=3,192.168.9.1
 dhcp-range=192.168.9.100,192.168.9.200,255.255.255.0,24h
 dhcp-host=52:54:00:00:EE:03,fsserve,192.168.9.3
 dhcp-host=52:54:00:00:EE:04,authserve,192.168.9.4
+dhcp-host=52:54:00:00:EE:05,cpuserve,192.168.9.5
 address=/host.localgrid/192.168.9.1
 address=/fsserve.localgrid/192.168.9.3
-address=/authserve.localgrid/192.168.9.4" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
+address=/authserve.localgrid/192.168.9.4
+address=/cpuserve.localgrid/192.168.9.5" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
 
 # IP Tables; allow tap0 to talk to the outside via ethernet
 sudo cp /etc/iptables/rules.v4 /etc/iptables/rules.v4_back
@@ -66,6 +68,8 @@ sudo CONF=unix make
 #############
 uninstall()
 {
+sudo rm -rf /opt/drawterm
+
 sudo mv /etc/iptables/rules.v4_back /etc/iptables/rules.v4
 sudo mv /etc/iptables/rules.v6_back /etc/iptables/rules.v6
 

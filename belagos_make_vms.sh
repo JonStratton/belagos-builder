@@ -26,6 +26,6 @@ expect 9front_authserve_configure.exp 9front_authserve.img 256
 echo "qemu-system-x86_64 -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=9front_authserve.img -device scsi-hd,drive=vd0 -boot n -curses" > run_authserve.sh
 chmod u+x run_authserve.sh
 
-# MISC
-echo "qemu-system-x86_64 -m 256 -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -curses" > run_terminal.sh
+# CPUSERVE
+echo "qemu-system-x86_64 -smp 4 -m 256 -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -curses" > run_cpuserve.sh
 chmod u+x run_cpuserve.sh
