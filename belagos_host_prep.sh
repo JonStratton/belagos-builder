@@ -32,6 +32,7 @@ local=/localgrid/
 expand-hosts
 dhcp-option=3,192.168.9.1
 dhcp-range=192.168.9.100,192.168.9.200,255.255.255.0,24h
+dhcp-boot=386/9bootpxe,fsserve,192.168.9.3
 dhcp-host=52:54:00:00:EE:03,fsserve,192.168.9.3
 dhcp-host=52:54:00:00:EE:04,authserve,192.168.9.4
 dhcp-host=52:54:00:00:EE:05,cpuserve,192.168.9.5
