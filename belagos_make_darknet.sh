@@ -1,4 +1,5 @@
 #!/bin/sh
+# Taken from https://yggdrasil-network.github.io/configuration.html#advertising-a-prefix
 
 package_list="radvd iptables-persistent yggdrasil"
 
@@ -46,7 +47,7 @@ iface tap0 inet6 static
    address 300:$ip6chunk::1
    netmask 64\" >> /etc/network/interfaces.d/tap0.iface )"
 
-# radvd, but it doesnt seem like it works in plan9
+# radvd, but it doesnt seem like it works in plan 9. But it does on OpenBSD.
 sudo sh -c "( echo \"
 interface tap0
 {
