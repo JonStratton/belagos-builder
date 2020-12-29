@@ -43,18 +43,15 @@ address=/cpuserve.localgrid/192.168.9.5" > /etc/dnsmasq.d/belagos-dnsmasq.conf )
 
 # IP Tables; allow tap0 to talk to the outside via ethernet
 sudo cp /etc/iptables/rules.v4 /etc/iptables/rules.v4_back
-sudo cp /etc/iptables/rules.v6 /etc/iptables/rules.v6_back
 eth0=`ls -1 /sys/class/net/ | grep '^e' | head -n 1`
 sudo iptables -t nat -A POSTROUTING -o $eth0 -j MASQUERADE
 sudo iptables -A FORWARD -i $eth0 -o tap0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 sudo iptables -A FORWARD -i tap0 -o $eth0 -j ACCEPT
 sudo sh -c '( iptables-save > /etc/iptables/rules.v4 )'
 
-sudo sh -c '( echo "net.ipv4.ip_forward = 1
-net.ipv6.ip_forward = 1" > /etc/sysctl.d/belagos-sysctl.conf )'
+sudo sh -c '( echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/belagos-sysctl.conf )'
 
 # You have to use 9front's Drawterm to connect to 9front it seems
-s
 cd /opt/
 sudo wget https://code.9front.org/hg/drawterm/archive/tip.tar.gz
 sudo tar xzf tip.tar.gz
