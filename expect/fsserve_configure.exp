@@ -15,10 +15,11 @@ set glenda_pass [get_keepass $keepass_pass "glenda" "Pass"]
 set img [lindex $argv 0]
 set ram [lindex $argv 1]
 
+# Turn on CPU Server
 set timeout -1
 spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=52:54:00:00:EE:03 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -curses
-expect "bootargs is*"
-sleep 2
+expect "bootargs is* "
+sleep 1
 send "\r"
 expect "user*:*"
 send "\r"
@@ -79,10 +80,10 @@ expect "(qemu)"
 send "quit\r"
 expect eof
 
-
+# Create user?
 spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=52:54:00:00:EE:03 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -curses
-expect "bootargs is*"
-sleep 2
+expect "bootargs is* "
+sleep 1
 send "\r"
 expect "authid:*"
 send "glenda\r"
@@ -102,8 +103,8 @@ expect eof
 
 # Turn on auth
 spawn qemu-system-x86_64 -m $ram -net nic,model=virtio,macaddr=52:54:00:00:EE:03 -net user -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -curses
-expect "bootargs is*"
-sleep 2
+expect "bootargs is* "
+sleep 1
 send "local!/dev/sd00/fscache -c\r"
 expect "config:*"
 send "noauth\r"
