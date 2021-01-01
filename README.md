@@ -21,22 +21,28 @@ I’m creating this because:
 
 This is a set of tools that creates a small self contained grid of plan9 qemu VMs on a vde2 network. The machines it creates are:
 
-fsserve.localgrid / 192.168.9.3
-authserve.localgrid / 192.168.9.4
-cpuserve.localgrid / 192.168.9.5
+	fsserve.localgrid / 192.168.9.3
+	authserve.localgrid / 192.168.9.4
+	cpuserve.localgrid / 192.168.9.5
 
 ## How to Install
 
-Run the base installer. This will do the following:
+Run the base installer.
+
+	./install_base.sh
+
+This will do the following:
 1. Install needed packages if they are not installed (like qemu, expect, etc).
 1. Add the running user to the "vde2-net" group and create a "tap0" interface for our VM network.
 1. Configure dnsmasq for a 192.168.9.X network and set static IPs/Names for some of our VM MAC addresses and also set up PXE.
 1. Set up IP Tables on IPv4, so our VMs can talk to the internet. This may not be needed if you are connecting to a Darknet instead.
 1. Download and Build 9fronts version of drawterm. 
 
-	./install_base.sh
+Run the script that starts making the VMs.
 
-Run the script that starts making the VMs. This will:
+	./make_vms.sh
+
+This will:
 1. Make a keepass file to store Glenda's password. 
 1. Download 9front for the CPU architecture. You can also pass in an ISO as a filename alternatively.
 1. Attempts to make the file server (fsserve) based in the ISO with qemu and expect.
@@ -44,9 +50,7 @@ Run the script that starts making the VMs. This will:
 	a. This is a delicate step due to curses problems with expect. If it stalls here (probably on "bootargs"), kill the script. Then restore the post install backup (cp img/9front_fsserve.img_back img/9front_fsserve.img) and try again (expect expect/fsserve_configure.exp bin/run_fsserve.sh).
 1. This will also create a small disk for out Authentication server (authserve) and runner scripts for the rest of the servers.
 
-	./make_vms.sh
-
-As all out other server depend on the file server to boot(via PXE). So in one terminal the the file server.
+All the other servers depend on the file server to boot(via PXE). So in one terminal run the the file server.
 
 	./bin/run_fsserve.sh -curses
 
@@ -66,9 +70,11 @@ All servers should have cpu turned on. So you can connect to them with drawterm:
 
 	/opt/drawterm/drawterm -h 192.168.9.3 -u glenda
 
-Optionally, you can also plug your grid into a darknet with one of the darknet(IPv6 overlay mesh network) scripts. This will:
+Optionally, you can also plug your grid into a darknet with one of the darknet(IPv6 overlay mesh network) scripts.
+
+	./make_darknet_yggdrasil.sh
+
+This will:
 1. Install the software. 
 1. Create IPv6 iptables rules to forward IPv6 connections between out vde2 network and the darknet.
 1. Configure radvd to broadcast our IPv6 router to the vde2 network.
-
-	./make_darknet_yggdrasil.sh
