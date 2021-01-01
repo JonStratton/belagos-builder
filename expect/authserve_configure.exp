@@ -12,11 +12,10 @@ puts "Enter new password for keepass(belagos.kdbx)\[echoed\]: "
 gets stdin keepass_pass
 set glenda_pass [get_keepass $keepass_pass "glenda" "Pass"]
 
-set img [lindex $argv 0]
-set ram [lindex $argv 1]
+set runner [lindex $argv 0]
 
 set timeout -1
-spawn qemu-system-x86_64 -m $ram -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -boot n -curses
+spawn $runner -curses
 expect "authid:"
 send "glenda\r"
 expect "authdom:"
@@ -47,7 +46,7 @@ expect "(qemu)"
 send "quit\r"
 expect eof
 
-spawn qemu-system-x86_64 -m $ram -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=$img -device scsi-hd,drive=vd0 -boot n -curses
+spawn $runner -curses
 expect "authid:"
 send "glenda\r"
 expect "authdom:"
