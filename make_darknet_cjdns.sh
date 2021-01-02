@@ -24,8 +24,8 @@ cd cjdns-master
 ./do
 sudo mv cjdroute /usr/bin/
 sudo mv contrib/systemd/cjdns.service /etc/systemd/system/
-sudo systemctl start cjdns
 sudo systemctl enable cjdns
+sudo systemctl start cjdns
 
 # IP Tables; allow tap0 to talk to the outside via ethernet
 sudo cp /etc/iptables/rules.v6 /etc/iptables/rules.v6_back
@@ -37,6 +37,12 @@ sudo sh -c '( ip6tables-save > /etc/iptables/rules.v6 )'
 sudo sh -c '( echo "net.ipv6.conf.all.forwarding=1
 net.ipv6.ip_forward = 1" > /etc/sysctl.d/belagos-darknet-sysctl.conf )'
 
+# Add "fdfc::1" address as static on tap0
+sudo sh -c "( echo \"
+iface tap0 inet6 static
+   address fdfc::1
+   netmask 64\" >> /etc/network/interfaces.d/tap0.iface )"
+
 # radvd, but it doesnt seem like it works in plan 9. But it does on OpenBSD.
 sudo sh -c "( echo \"
 interface tap0
@@ -46,11 +52,12 @@ interface tap0
 		AdvRouterAddr on;
 	};
 };\" > /etc/radvd.conf )"
+sudo systemctl enable radvd
 sudo systemctl restart radvd
 
 # Final step needed as radvd doesnt seem to work...
-#echo "Run the following on your plan 9 machine:"
-#echo "echo 'add :: 0:0:0:0:0:0:0:0 300:$ip6chunk::1' >/net/iproute"
+echo "Run the following on your plan 9 machine:"
+echo "echo 'add :: 0:0:0:0:0:0:0:0 fdfc::1' >/net/iproute"
 }
 
 #############
@@ -70,8 +77,8 @@ sudo rm /etc/sysctl.d/belagos-darknet-sysctl.conf
 sudo rm /etc/radvd.conf
 
 # Final step needed as radvd doesnt seem to work...
-#echo "Run the following on your plan 9 machine:"
-#echo "echo 'delete :: 0:0:0:0:0:0:0:0' >/net/iproute"
+echo "Run the following on your plan 9 machine:"
+echo "echo 'delete :: 0:0:0:0:0:0:0:0' >/net/iproute"
 }
 
 ########
