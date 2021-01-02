@@ -1,7 +1,7 @@
 #!/bin/sh
 # Taken from https://yggdrasil-network.github.io/configuration.html#advertising-a-prefix
 
-package_list="radvd iptables-persistent yggdrasil"
+package_list="radvd yggdrasil"
 
 ###########
 # Install #
@@ -22,7 +22,7 @@ for package in $package_list; do
       new_packages="$new_packages $package"
    fi
 done
-echo $new_packages > ./new_packages_darknet.txt
+echo $new_packages > ./new_packages_darknet_yggdrasil.txt
 
 # Enable Yggdrasil
 sudo systemctl enable yggdrasil
@@ -76,7 +76,7 @@ uninstall()
 sudo mv /etc/iptables/rules.v6_back /etc/iptables/rules.v6
 
 # Remove Packages
-sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./new_packages_darknet.txt`
+sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./new_packages_darknet_yggdrasil.txt`
 rm ./new_packages.txt
 sudo apt-get autoremove -y
 sudo apt-get clean -y
