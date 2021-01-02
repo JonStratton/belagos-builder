@@ -27,9 +27,10 @@ This is a set of tools that creates a small self contained grid of plan9 qemu VM
 
 ## How to Install
 
-Run the base installer.
+Run the base installer. Then reboot
 
 	./install_base.sh
+	reboot
 
 This will do the following:
 1. Install needed packages if they are not installed (like qemu, expect, etc).

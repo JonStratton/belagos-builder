@@ -8,7 +8,7 @@ fi
 
 # Arch for ISO and qemu
 iso_arch='386'
-qemo_arch='i386'
+qemu_arch='i386'
 arch=`uname -m`
 if [ $arch = 'x86_64' ]; then
    iso_arch='amd64'
@@ -20,7 +20,7 @@ local_iso="iso/9front.$iso_arch.iso"
 # Keepass #
 ###########
 # Create keepass db(belagos.kdbx) so we dont have to default passwords.
-#expect expect/keepass.exp
+expect expect/keepass.exp
 
 ################
 # Download ISO #
@@ -31,7 +31,8 @@ if [ $1 ]; then
    echo "using $local_iso"
 elif [ ! -f $local_iso ]; then
    # TODO, replace with torrent to avoid angering 9front
-   remote_iso=`wget -O - http://9front.org/iso/ 2>/dev/null | grep ".$arch.iso.gz<" | cut -d'"' -f4`
+   mkdir iso
+   remote_iso=`wget -O - http://9front.org/iso/ 2>/dev/null | grep ".$iso_arch.iso.gz<" | cut -d'"' -f4`
    wget -O $local_iso.gz http://9front.org/iso/$remote_iso
    gunzip $local_iso.gz
 fi
@@ -39,6 +40,9 @@ fi
 ###########
 # FSSERVE #
 ###########
+mkdir img
+mkdir bin
+
 echo "qemu-system-$qemu_arch $kvm -m 256 -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 \$*" > bin/run_fsserve.sh
 chmod u+x bin/run_fsserve.sh
 
