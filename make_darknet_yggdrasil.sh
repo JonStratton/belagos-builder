@@ -13,7 +13,10 @@ if [ ! -f /sys/class/net/tun0 ]; then
    sudo sh -c '( echo "deb http://neilalexander.s3.dualstack.eu-west-2.amazonaws.com/deb/ debian yggdrasil" > /etc/apt/sources.list.d/yggdrasil.list )'
 
    # Install Deps
+   sudo apt-get update
    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y yggdrasil
+   sudo systemctl enable yggdrasil
+   sudo systemctl start yggdrasil
 fi
 
 # IP Tables; allow tap0 to talk to the outside via ethernet
