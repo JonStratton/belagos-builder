@@ -1,0 +1,6 @@
+#!/bin/rc
+
+disk/mbr /dev/sd00/data
+disk/fdisk -aw /dev/sd00/data
+disk/prep -a nvram -w /dev/sd00/plan9
+echo clear >/dev/sd00/nvram

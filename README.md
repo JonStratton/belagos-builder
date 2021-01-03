@@ -41,23 +41,30 @@ This will do the following:
 
 Run the script that starts making the VMs.
 
-	./make_vms.sh
+	./create_grid.sh
 
 This will:
 1. Make a keepass file to store Glenda's password. 
 1. Download 9front for the CPU architecture. You can also pass in an ISO as a filename alternatively.
 1. Attempts to make the file server (fsserve) based in the ISO with qemu and expect.
-1. Attempts to configure fsserve. 
-	a. This is a delicate step due to curses problems with expect. If it stalls here (probably on "bootargs"), kill the script. Then restore the post install backup (cp img/9front_fsserve.img_back img/9front_fsserve.img) and try again (expect expect/fsserve_configure.exp bin/run_fsserve.sh).
-1. This will also create a small disk for out Authentication server (authserve) and runner scripts for the rest of the servers.
+1. Attempts to configure fsserve as a cpu serve.
 
-All the other servers depend on the file server to boot(via PXE). So in one terminal run the the file server.
+When this is done, we will need to run the base installer. In one terminal, boot fsserve to a prompt:
 
 	./bin/run_fsserve.sh -curses
 
-After fsserve is booted and at a prompt, we can how try to configure the auth server:
+In another terminal, run the following drawterm command. This will login to the fsserve and run rc/fsserve_build.rc as "glenda". The script:
+1. Sets up basic networking.
+1. Adds a static route for all IPv6 traffic. This is needed for our darknet connection.
+1. Sets up the rest of the servers to boot via PXE.
 
-	expect expect/authserve_configure.exp bin/run_authserve.sh
+	/opt/drawterm/drawterm -G -h 192.168.9.3 -a 192.168.9.3 -u glenda -c "/mnt/term/`pwd`/rc/fsserve_build.rc"
+
+Once this is done, reboot the fsserve. As all the other servers depend on the file server to boot(via PXE), make sure fsserve is running in another terminal before the next step.
+
+We can how try to configure the auth server:
+
+	create_grid/authserve_configure.exp bin/run_authserve.sh
 
 Once this is done, we can now run our authserve normally
 
@@ -78,4 +85,3 @@ Optionally, you can also plug your grid into a darknet with one of the darknet(I
 This will:
 1. Install the software. 
 1. Create IPv6 iptables rules to forward IPv6 connections between out vde2 network and the darknet.
-1. Configure radvd to broadcast our IPv6 router to the vde2 network.

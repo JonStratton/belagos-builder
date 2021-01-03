@@ -1,0 +1,75 @@
+#!/usr/bin/expect -f
+# https://nicolasmontanaro.com/blog/9front-guide/
+
+proc get_keepass { pass title type } {
+   set channel [open "|kpcli --kdb belagos.kdbx -c \"show -f belagos/$title\" | grep \"$type:\" | cut -d: -f2 | cut -b2-" r+]
+   puts $channel "$pass"
+   flush $channel
+   return [gets $channel]
+}
+
+puts "Enter new password for keepass(belagos.kdbx)\[echoed\]: "
+gets stdin keepass_pass
+set glenda_pass [get_keepass $keepass_pass "glenda" "Pass"]
+
+set runner [lindex $argv 0]
+
+# Turn on CPU Server
+set timeout -1
+spawn $runner -curses
+expect "bootargs is* "
+sleep 1
+send "\r"
+expect "user*:*"
+send "\r"
+expect "term% "
+send "9fs 9fat; echo 'service=cpu' >>/n/9fat/plan9.ini\r"
+expect "term% "
+send "fshalt\r"
+expect "term% "
+send "2"
+expect "(qemu)"
+send "quit\r"
+expect eof
+
+# Create user?
+spawn $runner -curses
+expect "bootargs is* "
+sleep 1
+send "\r"
+expect "authid:*"
+send "glenda\r"
+expect "authdom:*"
+send "localgrid\r"
+expect "secstore key:*"
+send "$keepass_pass\r"
+expect "password:*"
+send "$glenda_pass\r"
+expect "*# "
+send "fshalt\r"
+expect "*# "
+send "2"
+expect "(qemu)"
+send "quit\r"
+expect eof
+
+# Turn on auth
+spawn $runner -curses
+expect "bootargs is* "
+sleep 1
+send "local!/dev/sd00/fscache -c\r"
+expect "config:*"
+send "noauth\r"
+expect "config:*"
+send "noauth\r"
+expect "config:*"
+send "end\r"
+expect "*# "
+send "9fs 9fat; echo 'bootargs=local!/dev/sd00/fscache -a tcp!*!564' >>/n/9fat/plan9.ini\r"
+expect "*# "
+send "fshalt\r"
+expect "*# "
+send "2"
+expect "(qemu)"
+send "quit\r"
+expect eof

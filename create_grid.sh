@@ -20,7 +20,9 @@ local_iso="iso/9front.$iso_arch.iso"
 # Keepass #
 ###########
 # Create keepass db(belagos.kdbx) so we dont have to default passwords.
-expect expect/keepass.exp
+if [ ! -f belagos.kdbx ]; then
+   create_grid/keepass.exp
+fi
 
 ################
 # Download ISO #
@@ -50,13 +52,16 @@ chmod u+x bin/run_fsserve.sh
 qemu-img create -f qcow2 img/9front_fsserve.img 10G
 
 # Creating base install image
-expect expect/fsserve_install.exp bin/run_fsserve.sh $local_iso
+create_grid/9front_install.exp bin/run_fsserve.sh $local_iso
 
 # Back it up as expect is unrelyable with curses
 cp img/9front_fsserve.img img/9front_fsserve.img_back
 
 # Set up networking and turn on PXE
-expect expect/fsserve_configure.exp bin/run_fsserve.sh
+create_grid/9front_cpu_and_auth.exp bin/run_fsserve.sh
+
+# bin/boot_headless.exp bin/run_fsserve.sh
+# /opt/drawterm/drawterm -G -h 192.168.9.3 -a 192.168.9.3 -u glenda -c "/mnt/term/`pwd`/rc/fsserve_build.rc; fshalt"
 
 #############
 # AUTHSERVE #
@@ -67,8 +72,8 @@ echo "qemu-system-$qemu_arch $kvm -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net
 chmod u+x bin/run_authserve.sh
 
 qemu-img create -f qcow2 img/9front_authserve.img 1M
-#expect expect/authserve_configure.exp bin/run_authserve.sh
-echo "Run fsserver(bin/run_fsserve.sh -curses) and Auth server config(expect expect/authserve_configure.exp bin/run_authserve.sh) in another window"
+#create_grid/authserve_configure.exp bin/run_authserve.sh
+#echo "Run fsserver(bin/run_fsserve.sh -curses) and Auth server config(create_grid/authserve_configure.exp bin/run_authserve.sh) in another window"
 
 ############
 # CPUSERVE #

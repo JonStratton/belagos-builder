@@ -1,0 +1,18 @@
+#!/usr/bin/expect -f
+# TODO, figure out how to not prompt for bootargs...
+
+set runner [lindex $argv 0]
+
+# Turn on CPU Server
+set timeout -1
+spawn $runner -curses
+expect "bootargs is* "
+sleep 5
+send "\r"
+
+# Bring down on fs halting in console...
+expect "halted"
+send "2"
+expect "(qemu)"
+send "quit\r"
+expect eof

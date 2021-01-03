@@ -1,6 +1,6 @@
 #!/bin/sh
 
-package_list="dnsmasq iptables-persistent qemu-system-x86 vde2 uml-utilities kpcli expect 9mount build-essential libx11-dev libxt-dev"
+package_list="dnsmasq iptables-persistent qemu-system-x86 vde2 radvd uml-utilities kpcli expect 9mount build-essential libx11-dev libxt-dev"
 
 # Add KVM if possible
 if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then
@@ -22,13 +22,19 @@ for package in $package_list; do
 done
 echo $new_packages > ./new_packages.txt
 
-# Create tap0 interface for our VM Network
+# Create local glenda user and add her to the vde2-net group. This may eventually be our systemd running user on boot.
+# sudo useradd glenda -m --groups vde2-net
 sudo usermod -a -G vde2-net $USER
+
+# Create tap0 interface for our VM Network
 sudo sh -c '( echo "auto tap0
 iface tap0 inet static
    address 192.168.9.1
    netmask 255.255.255.0
-   vde2-switch -t tap0" > /etc/network/interfaces.d/tap0.iface )'
+   vde2-switch -t tap0
+iface tap0 inet6 static
+   address fdfc::1
+   netmask 64" > /etc/network/interfaces.d/tap0.iface )'
 
 # Create dnsmasq config for tap0 with some hard coded MACs to IP
 sudo sh -c '( echo "interface=tap0
@@ -46,15 +52,35 @@ address=/fsserve.localgrid/192.168.9.3
 address=/authserve.localgrid/192.168.9.4
 address=/cpuserve.localgrid/192.168.9.5" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
 
+# Prompt for iface if we have a couple. Like on a laptop with eth and wlan
+ipv4iface=''
+if [ `ls -1 /sys/class/net/ | grep -v tun0 | grep -v tap0 | grep -v lo | wc -l` -eq 1 ]; then
+   ipv4iface=`ls -1 /sys/class/net/ | grep -v tun0 | grep -v tap0 | grep -v lo`
+else
+   ifaces=`ls -1 /sys/class/net/ | grep -v tun0 | grep -v tap0 | grep -v lo`
+   read -p "Enter IPv4 interface that has an internet connection($ifaces): " ipv4iface
+fi
+
 # IP Tables; allow tap0 to talk to the outside via ethernet
 sudo cp /etc/iptables/rules.v4 /etc/iptables/rules.v4_back
-eth0=`ls -1 /sys/class/net/ | grep '^e' | head -n 1`
-sudo iptables -t nat -A POSTROUTING -o $eth0 -j MASQUERADE
-sudo iptables -A FORWARD -i $eth0 -o tap0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-sudo iptables -A FORWARD -i tap0 -o $eth0 -j ACCEPT
+sudo iptables -t nat -A POSTROUTING -o $ipv4iface -j MASQUERADE
+sudo iptables -A FORWARD -i $ipv4iface -o tap0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i tap0 -o $ipv4iface -j ACCEPT
 sudo sh -c '( iptables-save > /etc/iptables/rules.v4 )'
 
 sudo sh -c '( echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/belagos-sysctl.conf )'
+
+# radvd, but it doesnt seem like it works in plan 9. But it does on OpenBSD.
+sudo sh -c "( echo \"
+interface tap0
+{
+   AdvSendAdvert on;
+   prefix fdfc::1/64 {
+      AdvRouterAddr on;
+   };
+};\" > /etc/radvd.conf )"
+sudo systemctl enable radvd
+sudo systemctl restart radvd
 
 # You have to use 9front's Drawterm to connect to 9front it seems
 cd /opt/
@@ -74,11 +100,11 @@ uninstall()
 sudo rm -rf /opt/drawterm
 
 sudo mv /etc/iptables/rules.v4_back /etc/iptables/rules.v4
-sudo mv /etc/iptables/rules.v6_back /etc/iptables/rules.v6
 
 sudo rm /etc/network/interfaces.d/tap0.iface
 sudo rm /etc/dnsmasq.d/belagos-dnsmasq.conf
 sudo rm /etc/sysctl.d/belagos-sysctl.conf
+sudo rm /etc/radvd.conf
 
 # Remove Packages
 sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./new_packages.txt`

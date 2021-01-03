@@ -1,0 +1,39 @@
+#!/bin/rc
+
+# Set up base networking
+echo 'auth=authserve.localgrid authdom=localgrid
+
+ipnet=localgrid ip=192.168.9.0 ipmask=255.255.255.0
+    auth=authserve.localgrid
+    dnsdom=localgrid
+    cpu=authserve.localgrid
+    fs=fsserve.localgrid' >> /lib/ndb/local
+
+# Networking - Add static route for all IPv6 as it doesnt seem to be using our radvd as the default route
+mkdir /cfg/$sysname/
+mkdir /cfg/authserve/
+mkdir /cfg/cpuserve/
+echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/$sysname/cpurc
+echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/authserve/cpurc
+echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/cpuserve/cpurc
+
+# PXE
+echo 'ip/tftpd' >> /cfg/$sysname/cpurc
+
+# Base it on the cd plan9.ini, mostly for the bootfile arch
+echo 'bootargs=tls
+nobootprompt=tls
+auth=authserve.localgrid
+fs=fsserve.localgrid
+vgasize=text' > /cfg/pxe/default
+cat /cfg/plan9.ini | grep -v cdboot | grep -v '#' | grep -v 'vgasize' >> /cfg/pxe/default
+
+# PXE - Add entry for authserve.
+cp /cfg/pxe/default /cfg/pxe/52540000ee04
+echo 'service=cpu
+nvram=/dev/sd00/nvram' >> /cfg/pxe/52540000ee04
+
+# PXE - Add entry for cpuserve
+cp /cfg/pxe/default /cfg/pxe/52540000ee05
+echo 'service=cpu' >> /cfg/pxe/52540000ee05
+
