@@ -6,7 +6,7 @@ echo 'auth=authserve.localgrid authdom=localgrid
 ipnet=localgrid ip=192.168.9.0 ipmask=255.255.255.0
     auth=authserve.localgrid
     dnsdom=localgrid
-    cpu=authserve.localgrid
+    cpu=cpuserve.localgrid
     fs=fsserve.localgrid' >> /lib/ndb/local
 
 # Networking - Add static route for all IPv6 as it doesnt seem to be using our radvd as the default route
@@ -37,3 +37,5 @@ nvram=/dev/sd00/nvram' >> /cfg/pxe/52540000ee04
 cp /cfg/pxe/default /cfg/pxe/52540000ee05
 echo 'service=cpu' >> /cfg/pxe/52540000ee05
 
+# PXE - default: add cpuserve
+echo 'cpu=cpuserve.localgrid' >> /cfg/pxe/default

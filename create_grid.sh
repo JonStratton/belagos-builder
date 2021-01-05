@@ -78,5 +78,9 @@ qemu-img create -f qcow2 img/9front_authserve.img 1M
 ############
 # CPUSERVE #
 ############
-echo "qemu-system-$qemu_arch $kvm -smp 4 -m 256 -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -curses" > bin/run_cpuserve.sh
+
+echo "qemu-system-$qemu_arch $kvm -smp 4 -m 256 -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -curses" > bin/run_cpuserve.sh
 chmod u+x bin/run_cpuserve.sh
+
+qemu-img create -f qcow2 img/9front_cpuserve.img 1M
+#create_grid/authserve_configure.exp bin/run_cpuserve.sh

@@ -1,0 +1,12 @@
+#!/bin/rc
+
+# 9front rio.tron
+9fs 9front
+cd $home/tmp
+cp /n/extra/rio.tron.tgz .
+tar xzf rio.tron.tgz
+cd rio.tron
+./install
+cd ..
+rm -rf rio.tron
+rm rio.tron.tgz
