@@ -51,28 +51,29 @@ This will:
 
 When this is done, we will need to run the base installer. In one terminal, boot fsserve to a prompt:
 
-	./bin/run_fsserve.sh -curses
+	bin/run_fsserve.sh -curses
 
 In another terminal, run the following drawterm command. This will login to the fsserve and run rc/fsserve_build.rc as "glenda". The script:
 1. Sets up basic networking.
 1. Adds a static route for all IPv6 traffic. This is needed for our darknet connection.
 1. Sets up the rest of the servers to boot via PXE.
 
-	/opt/drawterm/drawterm -G -h 192.168.9.3 -a 192.168.9.3 -u glenda -c "/mnt/term/`pwd`/rc/fsserve_build.rc"
+	/opt/drawterm/drawterm -G -h 192.168.9.3 -a 192.168.9.3 -u glenda -c "/mnt/term/$PWD/rc/fsserve_build.rc"
 
 Once this is done, reboot the fsserve. As all the other servers depend on the file server to boot(via PXE), make sure fsserve is running in another terminal before the next step.
 
 We can how try to configure the auth server:
 
-	create_grid/authserve_configure.exp bin/run_authserve.sh
+	create_grid/9front_authserve.exp bin/run_authserve.sh
 
 Once this is done, we can now run our authserve normally
 
-	./bin/run_authserve.sh -curses
+	bin/run_authserve.sh -curses
 
 And then we can also run our diskless CPU server:
 
-	./bin/run_cpuserve.sh -curses
+	create_grid/9front_cpuserve.exp bin/run_cpuserve.sh
+	bin/run_cpuserve.sh -curses
 
 All servers should have cpu turned on. So you can connect to them with drawterm:
 

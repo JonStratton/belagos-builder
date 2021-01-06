@@ -49,16 +49,16 @@ echo "qemu-system-$qemu_arch $kvm -m 256 -net nic,macaddr=52:54:00:00:EE:03 -net
 chmod u+x bin/run_fsserve.sh
 
 # This can be large, as all other VMs will boot off of this disk
-qemu-img create -f qcow2 img/9front_fsserve.img 10G
+#qemu-img create -f qcow2 img/9front_fsserve.img 10G
 
 # Creating base install image
-create_grid/9front_install.exp bin/run_fsserve.sh $local_iso
+#create_grid/9front_install.exp bin/run_fsserve.sh $local_iso
 
 # Back it up as expect is unrelyable with curses
 cp img/9front_fsserve.img img/9front_fsserve.img_back
 
 # Set up networking and turn on PXE
-create_grid/9front_cpu_and_auth.exp bin/run_fsserve.sh
+create_grid/9front_fsserve.exp bin/run_fsserve.sh
 
 # bin/boot_headless.exp bin/run_fsserve.sh
 # /opt/drawterm/drawterm -G -h 192.168.9.3 -a 192.168.9.3 -u glenda -c "/mnt/term/`pwd`/rc/fsserve_build.rc; fshalt"
@@ -68,19 +68,18 @@ create_grid/9front_cpu_and_auth.exp bin/run_fsserve.sh
 #############
 # fsserve needs to be done first, as authserve netboots from it
 
-echo "qemu-system-$qemu_arch $kvm -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -curses" > bin/run_authserve.sh
+echo "qemu-system-$qemu_arch $kvm -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/run_authserve.sh
 chmod u+x bin/run_authserve.sh
 
 qemu-img create -f qcow2 img/9front_authserve.img 1M
-#create_grid/authserve_configure.exp bin/run_authserve.sh
-#echo "Run fsserver(bin/run_fsserve.sh -curses) and Auth server config(create_grid/authserve_configure.exp bin/run_authserve.sh) in another window"
+#create_grid/9front_authserve.exp bin/run_authserve.sh
 
 ############
 # CPUSERVE #
 ############
 
-echo "qemu-system-$qemu_arch $kvm -smp 4 -m 256 -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -curses" > bin/run_cpuserve.sh
+echo "qemu-system-$qemu_arch $kvm -smp 4 -m 256 -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/run_cpuserve.sh
 chmod u+x bin/run_cpuserve.sh
 
 qemu-img create -f qcow2 img/9front_cpuserve.img 1M
-#create_grid/authserve_configure.exp bin/run_cpuserve.sh
+#create_grid/9front_authserve.exp bin/run_cpuserve.sh

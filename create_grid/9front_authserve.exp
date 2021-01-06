@@ -1,0 +1,87 @@
+#!/usr/bin/expect -f
+# https://9p.io/wiki/plan9/Vmware_playground_for_plan9/index.html
+
+proc get_keepass { pass title type } {
+   set channel [open "|kpcli --kdb belagos.kdbx -c \"show -f belagos/$title\" | grep \"$type:\" | cut -d: -f2 | cut -b2-" r+]
+   puts $channel "$pass"
+   flush $channel
+   return [gets $channel]
+}
+
+puts "Enter new password for keepass(belagos.kdbx)\[echoed\]: "
+gets stdin keepass_pass
+set glenda_pass [get_keepass $keepass_pass "glenda" "Pass"]
+
+set runner [lindex $argv 0]
+
+set timeout -1
+
+# Create the nvram partition
+spawn $runner -curses
+expect "authid:"
+send "glenda\r"
+expect "authdom:"
+send "localgrid\r"
+expect "secstore key:"
+send "$keepass_pass\r"
+expect "password:"
+send "$glenda_pass\r"
+expect "Password:"
+send "$keepass_pass\r"
+expect "Confirm password:"
+send "$keepass_pass\r"
+
+expect "# "
+send "disk/mbr /dev/sd00/data\r"
+expect "# "
+send "disk/fdisk -aw /dev/sd00/data\r"
+expect "# "
+send "disk/prep -a nvram -w /dev/sd00/plan9\r"
+expect "# "
+send "echo clear >/dev/sd00/nvram\r"
+expect "# "
+send "fshalt\r"
+expect "# "
+send "2"
+expect "(qemu)"
+send "quit\r"
+expect eof
+
+# Create user glenda
+spawn $runner -curses
+expect "authid:"
+send "glenda\r"
+expect "authdom:"
+send "localgrid\r"
+expect "secstore key:"
+send "$keepass_pass\r"
+expect "password:"
+send "$glenda_pass\r"
+expect "# "
+
+send "auth/changeuser glenda\r"
+expect "Password:"
+send "$glenda_pass\r"
+expect "Confirm password:"
+send "$glenda_pass\r"
+expect "assign*POP*:"
+send "n\r"
+expect "Expiration*:"
+send "\r"
+expect "Post*:"
+send "\r"
+expect "*name:"
+send "\r"
+expect "Department*:"
+send "\r"
+expect "U*email address:"
+send "\r"
+expect "Spon*email address:"
+send "\r"
+expect "# "
+send "fshalt\r"
+expect "# "
+send "2"
+expect "(qemu)"
+send "quit\r"
+expect eof

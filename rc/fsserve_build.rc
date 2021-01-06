@@ -18,11 +18,11 @@ echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/authserve/cpurc
 echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/cpuserve/cpurc
 
 # PXE
+ip/tftpd
 echo 'ip/tftpd' >> /cfg/$sysname/cpurc
 
 # Base it on the cd plan9.ini, mostly for the bootfile arch
-echo 'bootargs=tls
-nobootprompt=tls
+echo 'nobootprompt=tls
 auth=authserve.localgrid
 fs=fsserve.localgrid
 vgasize=text' > /cfg/pxe/default
@@ -34,8 +34,7 @@ echo 'service=cpu
 nvram=/dev/sd00/nvram' >> /cfg/pxe/52540000ee04
 
 # PXE - Add entry for cpuserve
-cp /cfg/pxe/default /cfg/pxe/52540000ee05
-echo 'service=cpu' >> /cfg/pxe/52540000ee05
+cp /cfg/pxe/52540000ee04 /cfg/pxe/52540000ee05
 
 # PXE - default: add cpuserve
 echo 'cpu=cpuserve.localgrid' >> /cfg/pxe/default
