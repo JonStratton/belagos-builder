@@ -1,0 +1,13 @@
+#!/usr/bin/expect -f
+
+proc get_keepass { pass title type } {
+   set channel [open "|kpcli --kdb belagos.kdbx -c \"show -f belagos/$title\" | grep \"$type:\" | cut -d: -f2 | cut -b2-" r+]
+   puts $channel "$pass"
+   flush $channel
+   return [gets $channel]
+}
+
+set user [lindex $argv 0]
+gets stdin keepass_pass
+set glenda_pass [get_keepass $keepass_pass $user "Pass"]
+puts $glenda_pass

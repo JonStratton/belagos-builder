@@ -60,8 +60,28 @@ cp img/9front_fsserve.img img/9front_fsserve.img_back
 # Set up networking and turn on PXE
 create_grid/9front_fsserve.exp bin/run_fsserve.sh
 
-# bin/boot_headless.exp bin/run_fsserve.sh
-# /opt/drawterm/drawterm -G -h 192.168.9.3 -a 192.168.9.3 -u glenda -c "/mnt/term/`pwd`/rc/fsserve_build.rc; fshalt"
+# Boot fsserve in the background and finish the install
+create_grid/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
+sleep 20
+
+keepass_passphrase=''
+read -p "Enter password for keepass(belagos.kdbx) again[echoed]: " keepass_passphrase
+
+counter=0
+success=0
+keepass_passphrase=''
+read -p "Enter password for keepass(belagos.kdbx) again[echoed]: " keepass_passphrase
+while [ $counter -lt 10 -a $success -eq 0 ]
+do
+   if [ `echo "$keepass_passphrase" | create_grid/keepass_get.exp glenda 2>/dev/null | /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "/mnt/term/$PWD/rc/fsserve_build.rc; echo done; fshalt" | grep done | wc -l` -ge 1 ]; then
+      success=1
+   else
+      echo "No response($counter). Sleeping 10."
+      sleep 10
+      counter=`expr $counter + 1`
+   fi
+done
+echo "Done Success: $success, Counter: $counter\n"
 
 #############
 # AUTHSERVE #
@@ -72,7 +92,11 @@ echo "qemu-system-$qemu_arch $kvm -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net
 chmod u+x bin/run_authserve.sh
 
 qemu-img create -f qcow2 img/9front_authserve.img 1M
-#create_grid/9front_authserve.exp bin/run_authserve.sh
+create_grid/9front_authserve.exp bin/run_authserve.sh
+
+# Run it in the BG as we need it for cpuserve creation
+create_grid/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
+sleep 20
 
 ############
 # CPUSERVE #
@@ -82,4 +106,4 @@ echo "qemu-system-$qemu_arch $kvm -smp 4 -m 256 -net nic,macaddr=52:54:00:00:EE:
 chmod u+x bin/run_cpuserve.sh
 
 qemu-img create -f qcow2 img/9front_cpuserve.img 1M
-#create_grid/9front_authserve.exp bin/run_cpuserve.sh
+create_grid/9front_authserve.exp bin/run_cpuserve.sh
