@@ -24,10 +24,6 @@ expect "secstore key:"
 send "$keepass_pass\r"
 expect "password:"
 send "$glenda_pass\r"
-#expect "Password:"
-#send "$keepass_pass\r"
-#expect "Confirm password:"
-#send "$keepass_pass\r"
 
 # Create the nvram partition
 expect "# "
@@ -39,14 +35,7 @@ send "disk/prep -a nvram -w /dev/sd00/plan9\r"
 expect "# "
 send "echo clear >/dev/sd00/nvram\r"
 expect "# "
-send "fshalt\r"
-expect "# "
-send "2"
-expect "(qemu)"
-send "quit\r"
-expect eof
-
-spawn $runner -curses
+send "auth/wrkey\r"
 expect "authid:"
 send "glenda\r"
 expect "authdom:"
