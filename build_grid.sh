@@ -16,13 +16,18 @@ if [ $arch = 'x86_64' ]; then
 fi
 local_iso="iso/9front.$iso_arch.iso"
 
+[ ! -d img ] && mkdir img
+[ ! -d bin ] && mkdir bin
+
 ###########
 # Keepass #
 ###########
 # Create keepass db(belagos.kdbx) so we dont have to default passwords.
-if [ ! -f belagos.kdbx ]; then
-   create_grid/keepass.exp
-fi
+[ ! -f belagos.kdbx ] && build_grid/keepass.exp
+
+# Get it again for use below
+keepass_passphrase=''
+read -p "Enter password for keepass(belagos.kdbx) again[echoed]: " keepass_passphrase
 
 ################
 # Download ISO #
@@ -42,8 +47,6 @@ fi
 ###########
 # FSSERVE #
 ###########
-mkdir img
-mkdir bin
 
 echo "qemu-system-$qemu_arch $kvm -m 256 -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 \$*" > bin/run_fsserve.sh
 chmod u+x bin/run_fsserve.sh
@@ -52,36 +55,29 @@ chmod u+x bin/run_fsserve.sh
 #qemu-img create -f qcow2 img/9front_fsserve.img 10G
 
 # Creating base install image
-#create_grid/9front_install.exp bin/run_fsserve.sh $local_iso
+#build_grid/9front_install.exp bin/run_fsserve.sh $local_iso
 
 # Back it up as expect is unrelyable with curses
 cp img/9front_fsserve.img img/9front_fsserve.img_back
 
 # Set up networking and turn on PXE
-create_grid/9front_fsserve.exp bin/run_fsserve.sh
+echo "$keepass_passphrase" | build_grid/9front_fsserve.exp bin/run_fsserve.sh
 
-# Boot fsserve in the background and finish the install
-create_grid/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
-sleep 20
+# Boot fsserve in the background and wait until its up
+bin/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
+sleep 10
+echo "$keepass_passphrase" | build_grid/9front_boot_wait.sh 192.168.9.3
 
-keepass_passphrase=''
-read -p "Enter password for keepass(belagos.kdbx) again[echoed]: " keepass_passphrase
+# Run installer
+echo "$keepass_passphrase" | build_grid/9front_fsserve_net_and_pxe.exp
 
-counter=0
-success=0
-keepass_passphrase=''
-read -p "Enter password for keepass(belagos.kdbx) again[echoed]: " keepass_passphrase
-while [ $counter -lt 10 -a $success -eq 0 ]
-do
-   if [ `echo "$keepass_passphrase" | create_grid/keepass_get.exp glenda 2>/dev/null | /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "/mnt/term/$PWD/rc/fsserve_build.rc; echo done; fshalt" | grep done | wc -l` -ge 1 ]; then
-      success=1
-   else
-      echo "No response($counter). Sleeping 10."
-      sleep 10
-      counter=`expr $counter + 1`
-   fi
-done
-echo "Done Success: $success, Counter: $counter\n"
+#echo "$keepass_passphrase" | build_grid/keepass_get.exp glenda | /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c /mnt/term/$PWD/rc/fsserve_build.rc
+#echo "$keepass_passphrase" | build_grid/keepass_get.exp glenda | /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c ip/tftpd
+
+# Boot fsserve in the background and wait until its up
+bin/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
+sleep 10
+echo "$keepass_passphrase" | build_grid/9front_boot_wait.sh 192.168.9.3
 
 #############
 # AUTHSERVE #
@@ -92,11 +88,12 @@ echo "qemu-system-$qemu_arch $kvm -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net
 chmod u+x bin/run_authserve.sh
 
 qemu-img create -f qcow2 img/9front_authserve.img 1M
-create_grid/9front_authserve.exp bin/run_authserve.sh
+echo "$keepass_passphrase" | build_grid/9front_authserve.exp bin/run_authserve.sh
 
 # Run it in the BG as we need it for cpuserve creation
-create_grid/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
-sleep 20
+bin/run_headless.exp bin/run_authserve.sh > /dev/null 2>&1 &
+sleep 10
+echo "$keepass_passphrase" | build_grid/9front_boot_wait.sh 192.168.9.4
 
 ############
 # CPUSERVE #
@@ -106,4 +103,11 @@ echo "qemu-system-$qemu_arch $kvm -smp 4 -m 256 -net nic,macaddr=52:54:00:00:EE:
 chmod u+x bin/run_cpuserve.sh
 
 qemu-img create -f qcow2 img/9front_cpuserve.img 1M
-create_grid/9front_authserve.exp bin/run_cpuserve.sh
+echo "$keepass_passphrase" | build_grid/9front_authserve.exp bin/run_cpuserve.sh
+
+########################
+# Turn down everything #
+########################
+
+echo "$keepass_passphrase" | build_grid/keepass_get.exp glenda | /opt/drawterm/drawterm -h 192.168.9.4 -a 192.168.9.4 -u glenda -G -c "fshalt"
+echo "$keepass_passphrase" | build_grid/keepass_get.exp glenda | /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "fshalt"

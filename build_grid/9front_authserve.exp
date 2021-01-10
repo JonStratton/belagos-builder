@@ -12,6 +12,9 @@ puts "Enter new password for keepass(belagos.kdbx)\[echoed\]: "
 gets stdin keepass_pass
 set glenda_pass [get_keepass $keepass_pass "glenda" "Pass"]
 
+puts "$glenda_pass"
+sleep 5
+
 set runner [lindex $argv 0]
 
 set timeout -1
@@ -31,6 +34,7 @@ send "$keepass_pass\r"
 expect "Confirm password:"
 send "$keepass_pass\r"
 
+# nvram
 expect "# "
 send "disk/mbr /dev/sd00/data\r"
 expect "# "
@@ -40,15 +44,7 @@ send "disk/prep -a nvram -w /dev/sd00/plan9\r"
 expect "# "
 send "echo clear >/dev/sd00/nvram\r"
 expect "# "
-send "fshalt\r"
-expect "# "
-send "2"
-expect "(qemu)"
-send "quit\r"
-expect eof
-
-# Create user glenda
-spawn $runner -curses
+send "auth/wrkey\r"
 expect "authid:"
 send "glenda\r"
 expect "authdom:"
@@ -58,7 +54,15 @@ send "$keepass_pass\r"
 expect "password:"
 send "$glenda_pass\r"
 expect "# "
+send "fshalt\r"
+expect "# "
+send "2"
+expect "(qemu)"
+send "quit\r"
+expect eof
 
+spawn $runner -curses
+expect "# "
 send "auth/changeuser glenda\r"
 expect "Password:"
 send "$glenda_pass\r"

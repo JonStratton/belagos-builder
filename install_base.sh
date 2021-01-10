@@ -20,7 +20,7 @@ for package in $package_list; do
       new_packages="$new_packages $package"
    fi
 done
-echo $new_packages > ./new_packages.txt
+echo $new_packages > ./install_base_new_packages.txt
 
 # Create local glenda user and add her to the vde2-net group. This may eventually be our systemd running user on boot.
 # sudo useradd glenda -m --groups vde2-net
@@ -107,7 +107,7 @@ sudo rm /etc/sysctl.d/belagos-sysctl.conf
 sudo rm /etc/radvd.conf
 
 # Remove Packages
-sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./new_packages.txt`
+sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./install_base_new_packages.txt`
 rm ./new_packages.txt
 sudo apt-get autoremove -y
 sudo apt-get clean -y

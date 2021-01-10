@@ -41,39 +41,15 @@ This will do the following:
 
 Run the script that starts making the VMs.
 
-	./create_grid.sh
+	./build_grid.sh
 
 This will:
 1. Make a keepass file to store Glenda's password. 
 1. Download 9front for the CPU architecture. You can also pass in an ISO as a filename alternatively.
-1. Attempts to make the file server (fsserve) based in the ISO with qemu and expect.
-1. Attempts to configure fsserve as a cpu serve.
-
-When this is done, we will need to run the base installer. In one terminal, boot fsserve to a prompt:
-
-	bin/run_fsserve.sh -curses
-
-In another terminal, run the following drawterm command. This will login to the fsserve and run rc/fsserve_build.rc as "glenda". The script:
-1. Sets up basic networking.
-1. Adds a static route for all IPv6 traffic. This is needed for our darknet connection.
-1. Sets up the rest of the servers to boot via PXE.
-
-	/opt/drawterm/drawterm -G -h 192.168.9.3 -a 192.168.9.3 -u glenda -c "/mnt/term/$PWD/rc/fsserve_build.rc"
-
-Once this is done, reboot the fsserve. As all the other servers depend on the file server to boot(via PXE), make sure fsserve is running in another terminal before the next step.
-
-We can how try to configure the auth server:
-
-	create_grid/9front_authserve.exp bin/run_authserve.sh
-
-Once this is done, we can now run our authserve normally
-
-	bin/run_authserve.sh -curses
-
-And then we can also run our diskless CPU server:
-
-	create_grid/9front_cpuserve.exp bin/run_cpuserve.sh
-	bin/run_cpuserve.sh -curses
+1. Attempts to make the file server (fsserve) based in the ISO with qemu and expect. Turns on PXE.
+1. Boots the authserve from the fsserve via PXE. Creates the nvram in the authserve and reset glenda's password.
+1. Boots the cpuserve from the fsserve via PXE and creates nvram.
+1. Shuts everything down.
 
 All servers should have cpu turned on. So you can connect to them with drawterm:
 

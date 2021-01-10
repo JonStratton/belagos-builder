@@ -15,7 +15,7 @@ for package in $package_list; do
       new_packages="$new_packages $package"
    fi
 done
-echo $new_packages > ./new_packages_darknet_cjdns.txt
+echo $new_packages > ./install_darknet_cjdns_new_packages.txt
 
 # Dont install if we already have a tun0. Just do everything around it.
 if [ ! -f /sys/class/net/tun0 ]; then
@@ -52,7 +52,7 @@ uninstall()
 sudo mv /etc/iptables/rules.v6_back /etc/iptables/rules.v6
 
 # Remove Packages
-sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./new_packages_darknet_cjdns.txt`
+sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./install_darknet_cjdns_new_packages.txt`
 rm ./new_packages.txt
 sudo apt-get autoremove -y
 sudo apt-get clean -y

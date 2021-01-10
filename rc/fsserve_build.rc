@@ -18,7 +18,6 @@ echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/authserve/cpurc
 echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/cpuserve/cpurc
 
 # PXE
-ip/tftpd
 echo 'ip/tftpd' >> /cfg/$sysname/cpurc
 
 # Base it on the cd plan9.ini, mostly for the bootfile arch
