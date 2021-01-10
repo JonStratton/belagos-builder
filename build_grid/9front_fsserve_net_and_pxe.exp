@@ -1,4 +1,7 @@
 #!/usr/bin/expect -f
+# Should be able to just:
+#	echo "MyKeePassPass" | build_grid/keepass_get.exp glenda | /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "/mnt/term/$PWD/rc/fsserve_build.rc; ip/tftpd"
+# But it seems to be stalling on the "ip/tftpd" (or fshalt). TODO, work around that better and remove this script
 
 proc get_keepass { pass title type } {
    set channel [open "|kpcli --kdb belagos.kdbx -c \"show -f belagos/$title\" | grep \"$type:\" | cut -d: -f2 | cut -b2-" r+]

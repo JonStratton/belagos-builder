@@ -12,9 +12,6 @@ puts "Enter new password for keepass(belagos.kdbx)\[echoed\]: "
 gets stdin keepass_pass
 set glenda_pass [get_keepass $keepass_pass "glenda" "Pass"]
 
-puts "$glenda_pass"
-sleep 5
-
 set runner [lindex $argv 0]
 
 set timeout -1
