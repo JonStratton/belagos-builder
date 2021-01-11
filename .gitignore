@@ -1,6 +1,4 @@
 *.iso
 *.img
-*.kdbx
-run_*.sh
-img/*
+run_*serve.sh
 .belagos_pass
