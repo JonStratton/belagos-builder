@@ -2,3 +2,5 @@
 *.img
 *.kdbx
 run_*.sh
+img/*
+.belagos_pass

@@ -6,8 +6,6 @@ sleep="sleep 5"
 
 counter=0
 success=0
-keepass_passphrase=''
-read -p "Enter password for keepass(belagos.kdbx) again[echoed]: " keepass_passphrase
 
 # Start with ping
 while [ $counter -lt $max_counter -a $success -eq 0 ]
@@ -29,7 +27,7 @@ while [ $counter -lt $max_counter -a $success -eq 0 ]
 do
    drawterm="/opt/drawterm/drawterm -h $ip -a $ip -u glenda -G -c 'uptime'"
    echo $drawterm
-   if [ `echo "$keepass_passphrase" | build_grid/keepass_get.exp glenda 2>/dev/null | $drawterm | grep days | wc -l` -ge 1 ]; then
+   if [ `cat .belagos_pass | $drawterm | grep days | wc -l` -ge 1 ]; then
       success=1
    else
       echo $sleep

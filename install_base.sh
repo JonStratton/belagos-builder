@@ -1,6 +1,6 @@
 #!/bin/sh
 
-package_list="dnsmasq iptables-persistent qemu-system-x86 vde2 radvd uml-utilities kpcli expect 9mount build-essential libx11-dev libxt-dev"
+package_list="dnsmasq iptables-persistent qemu-system-x86 vde2 radvd uml-utilities expect build-essential libx11-dev libxt-dev"
 
 # Add KVM if possible
 if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then
