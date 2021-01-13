@@ -19,7 +19,7 @@ sudo chown -R glenda:glenda /home/glenda/img/
 sudo touch /home/glenda/.belagos_pass
 sudo chown glenda:glenda /home/glenda/.belagos_pass
 sudo chmod 600 /home/glenda/.belagos_pass
-echo "changeme" > /home/glenda/.belagos_pass
+cat .belagos_pass > /home/glenda/.belagos_pass
 
 # Install service
 sudo sh -c '( echo "[Unit]
@@ -35,9 +35,10 @@ Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/belagos.service )'
-#sudo systemctl daemon-reload
-#sudo systemctl start belagos.service
-#sudo systemctl enable belagos.service
+
+sudo systemctl daemon-reload
+sudo systemctl start belagos.service
+sudo systemctl enable belagos.service
 }
 
 #############
