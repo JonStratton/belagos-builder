@@ -11,8 +11,8 @@ sudo useradd glenda -m --groups vde2-net
 sudo mkdir /home/glenda/bin/
 sudo cp bin/* /home/glenda/bin/
 sudo chown -R glenda:glenda /home/glenda/bin/
-sudo mkdir /home/glenda/bin/img
-sudo cp img/* /home/glenda/img/
+sudo mkdir /home/glenda/img/
+sudo cp img/*img /home/glenda/img/
 sudo chown -R glenda:glenda /home/glenda/img/
 
 # Glenda's Password
@@ -23,13 +23,12 @@ echo "changeme" > /home/glenda/.belagos_pass
 
 # Install service
 sudo sh -c '( echo "[Unit]
-Description=Mesh Front Service
+Description=Belagos Service
 After=network.target
 
 [Service]
 Type=simple
 User=glenda
-Group=belagos
 WorkingDirectory=/home/glenda
 ExecStart=/home/glenda/bin/run_grid.sh
 Restart=on-failure
