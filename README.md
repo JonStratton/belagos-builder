@@ -1,5 +1,5 @@
-# beligos-builder
-Turns a Debian install into BeligOS. Currently this is some shell and Expect scripts to build some 9front VMs.
+# belagos-builder
+Turns a Debian install into BelagOS. Currently this is some shell and Expect scripts to build some 9front VMs.
 
 ## BelaGOS - Black Emulated Grid Operating System
 I’m creating this because:

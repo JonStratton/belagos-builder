@@ -19,7 +19,7 @@ sudo chown -R glenda:glenda /home/glenda/img/
 sudo touch /home/glenda/.belagos_pass
 sudo chown glenda:glenda /home/glenda/.belagos_pass
 sudo chmod 600 /home/glenda/.belagos_pass
-cat ~/.belagos_pass > /home/glenda/.belagos_pass
+cat ~/.belagos_pass | sudo sh -c '( cat > /home/glenda/.belagos_pass )'
 
 # Install fsserve service
 sudo sh -c '( echo "[Unit]
@@ -30,7 +30,7 @@ After=network.target
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/run_systemd.sh bin/run_fsserve.sh 192.168.9.3
+ExecStart=/home/glenda/bin/run_systemd.sh bin/run_fsserve.sh
 Restart=on-failure
 
 [Install]
@@ -45,7 +45,7 @@ After=network.target belagos_fsserve.service
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/run_systemd.sh bin/run_authserve.sh 192.168.9.4
+ExecStart=/home/glenda/bin/run_systemd.sh bin/run_authserve.sh 192.168.9.3
 Restart=on-failure
 
 [Install]
@@ -60,7 +60,7 @@ After=network.target belagos_fsserve.service belagos_authserve.service
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/run_systemd.sh bin/run_cpuserve.sh
+ExecStart=/home/glenda/bin/run_systemd.sh bin/run_cpuserve.sh 192.168.9.4
 Restart=on-failure
 
 [Install]
@@ -95,7 +95,7 @@ sudo rm /home/glenda/.belagos_pass
 sudo rm -rf /home/glenda/bin/
 sudo rm -rf /home/glenda/img/
 
-userdel -r glenda
+sudo userdel -r glenda
 }
 
 ########
