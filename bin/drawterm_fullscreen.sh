@@ -2,7 +2,7 @@
 
 res=`xdpyinfo 2> /dev/null | awk '/dimensions/ {print $2}'`
 geo='-G' # No gui
-if [ $red ]; then
+if [ $res ]; then
    geo="-g $res"
 fi
 

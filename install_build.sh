@@ -19,26 +19,60 @@ sudo chown -R glenda:glenda /home/glenda/img/
 sudo touch /home/glenda/.belagos_pass
 sudo chown glenda:glenda /home/glenda/.belagos_pass
 sudo chmod 600 /home/glenda/.belagos_pass
-cat .belagos_pass > /home/glenda/.belagos_pass
+cat ~/.belagos_pass > /home/glenda/.belagos_pass
 
-# Install service
+# Install fsserve service
 sudo sh -c '( echo "[Unit]
-Description=Belagos Service
+Description=Belagos fsserve Service
 After=network.target
 
 [Service]
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/run_grid.sh
+ExecStart=/home/glenda/bin/run_systemd.sh bin/run_fsserve.sh 192.168.9.3
 Restart=on-failure
 
 [Install]
-WantedBy=multi-user.target" > /etc/systemd/system/belagos.service )'
+WantedBy=multi-user.target" > /etc/systemd/system/belagos_fsserve.service )'
+
+# Install authserve service
+sudo sh -c '( echo "[Unit]
+Description=Belagos authserve Service
+After=network.target belagos_fsserve.service
+
+[Service]
+Type=simple
+User=glenda
+WorkingDirectory=/home/glenda
+ExecStart=/home/glenda/bin/run_systemd.sh bin/run_authserve.sh 192.168.9.4
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/belagos_authserve.service )'
+
+# Install cpuserve service
+sudo sh -c '( echo "[Unit]
+Description=Belagos cpuserve Service
+After=network.target belagos_fsserve.service belagos_authserve.service
+
+[Service]
+Type=simple
+User=glenda
+WorkingDirectory=/home/glenda
+ExecStart=/home/glenda/bin/run_systemd.sh bin/run_cpuserve.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/belagos_cpuserve.service )'
 
 sudo systemctl daemon-reload
-sudo systemctl start belagos.service
-sudo systemctl enable belagos.service
+sudo systemctl enable belagos_fsserve.service
+sudo systemctl enable belagos_authserve.service
+sudo systemctl enable belagos_cpuserve.service
+sudo systemctl start belagos_fsserve.service
+sudo systemctl start belagos_authserve.service
+sudo systemctl start belagos_cpuserve.service
 }
 
 #############
@@ -47,10 +81,17 @@ sudo systemctl enable belagos.service
 uninstall()
 {
 # Stop Service and uninstall
-sudo systemctl stop belagos.service
-sudo systemctl disable belagos.service
-sudo rm /etc/systemd/system/belagos.service
+sudo systemctl stop belagos_fsserve.service
+sudo systemctl stop belagos_authserve.service
+sudo systemctl stop belagos_cpuserve.service
+sudo systemctl disable belagos_fsserve.service
+sudo systemctl disable belagos_authserve.service
+sudo systemctl disable belagos_cpuserve.service
+sudo rm /etc/systemd/system/belagos_fsserve.service
+sudo rm /etc/systemd/system/belagos_authserve.service
+sudo rm /etc/systemd/system/belagos_cpuserve.service
 
+sudo rm /home/glenda/.belagos_pass
 sudo rm -rf /home/glenda/bin/
 sudo rm -rf /home/glenda/img/
 

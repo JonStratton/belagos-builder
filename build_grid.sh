@@ -23,14 +23,14 @@ local_iso="iso/9front.$iso_arch.iso"
 # Glenda Password #
 ###################
 
-if [ ! -f .belagos_pass ]; then
+if [ ! -f ~/.belagos_pass ]; then
    belagos_pass_default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
-   echo "Passord will be stored in .belagos_pass"
+   echo "Passord will be stored in ~/.belagos_pass"
    read -p "Enter password for glenda(default $belagos_pass_default): " belagos_pass
    [ -z $belagos_pass ] && belagos_pass=$belagos_pass_default
-   touch .belagos_pass
-   chmod 600 .belagos_pass
-   echo $belagos_pass > .belagos_pass
+   touch ~/.belagos_pass
+   chmod 600 ~/.belagos_pass
+   echo $belagos_pass > ~/.belagos_pass
 fi
 
 ################
@@ -66,18 +66,18 @@ fi
 [ ! -f img/9front_fsserve.img_back ] && cp img/9front_fsserve.img img/9front_fsserve.img_back
 
 # Set up networking and turn on PXE
-cat .belagos_pass | build_grid/9front_fsserve.exp bin/run_fsserve.sh
+cat ~/.belagos_pass | build_grid/9front_fsserve.exp bin/run_fsserve.sh
 
 # Boot fsserve in the background and wait until its up
-bin/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
+build_grid/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
 sleep 10
 bin/9front_boot_wait.sh 192.168.9.3
 
 # Run installer via drawterm
-cat .belagos_pass | build_grid/9front_fsserve_net_and_pxe.exp
+cat ~/.belagos_pass | build_grid/9front_fsserve_net_and_pxe.exp
 
 # Boot fsserve in the background and wait until its up
-bin/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
+build_grid/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
 sleep 10
 bin/9front_boot_wait.sh 192.168.9.3
 
@@ -90,10 +90,10 @@ echo "qemu-system-$qemu_arch $kvm -m 256 -net nic,macaddr=52:54:00:00:EE:04 -net
 chmod u+x bin/run_authserve.sh
 
 qemu-img create -f qcow2 img/9front_authserve.img 1M
-cat .belagos_pass | build_grid/9front_authserve.exp bin/run_authserve.sh
+cat ~/.belagos_pass | build_grid/9front_authserve.exp bin/run_authserve.sh
 
 # Run it in the BG as we need it for cpuserve creation
-bin/run_headless.exp bin/run_authserve.sh > /dev/null 2>&1 &
+build_grid/run_headless.exp bin/run_authserve.sh > /dev/null 2>&1 &
 sleep 10
 bin/9front_boot_wait.sh 192.168.9.4
 
@@ -105,11 +105,11 @@ echo "qemu-system-$qemu_arch $kvm -smp 4 -m 256 -net nic,macaddr=52:54:00:00:EE:
 chmod u+x bin/run_cpuserve.sh
 
 qemu-img create -f qcow2 img/9front_cpuserve.img 1M
-cat .belagos_pass | build_grid/9front_cpuserve.exp bin/run_cpuserve.sh
+cat ~/.belagos_pass | build_grid/9front_cpuserve.exp bin/run_cpuserve.sh
 
 ########################
 # Turn down everything #
 ########################
 
-cat .belagos_pass | /opt/drawterm/drawterm -h 192.168.9.4 -a 192.168.9.4 -u glenda -G -c "fshalt"
-cat .belagos_pass | /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "fshalt"
+cat ~/.belagos_pass | /opt/drawterm/drawterm -h 192.168.9.4 -a 192.168.9.4 -u glenda -G -c "fshalt"
+cat ~/.belagos_pass | /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "fshalt"
