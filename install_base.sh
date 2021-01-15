@@ -23,7 +23,6 @@ done
 echo $new_packages > ./install_base_new_packages.txt
 
 # Create local glenda user and add her to the vde2-net group. This may eventually be our systemd running user on boot.
-# sudo useradd glenda -m --groups vde2-net
 sudo usermod -a -G vde2-net $USER
 
 # Create tap0 interface for our VM Network
@@ -35,6 +34,14 @@ iface tap0 inet static
 iface tap0 inet6 static
    address fdfc::1
    netmask 64" > /etc/network/interfaces.d/tap0.iface )'
+
+# Create non perssistent tap0 using /var/run/vde2/ so we dont have to reboot to continue
+sudo mkdir -p /var/run/vde2
+sudo chown vde2-net:vde2-net /var/run/vde2/
+sudo chmod 2770 /var/run/vde2/
+sudo vde_switch -tap tap0 -s /var/run/vde2/tap0.ctl -m 660 -g vde2-net -M /var/run/vde2/tap0.mgmt --mgmtmode 660 -d
+sudo ip addr add 192.168.9.1/24 dev tap0
+sudo ip link set dev tap0 up
 
 # Create dnsmasq config for tap0 with some hard coded MACs to IP
 sudo sh -c '( echo "interface=tap0
