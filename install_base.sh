@@ -24,6 +24,7 @@ echo $new_packages > ./install_base_new_packages.txt
 
 # Create local glenda user and add her to the vde2-net group. This may eventually be our systemd running user on boot.
 sudo usermod -a -G vde2-net $USER
+newgrp vde2-net
 
 # Create tap0 interface for our VM Network
 sudo sh -c '( echo "auto tap0
@@ -58,6 +59,8 @@ address=/host.localgrid/192.168.9.1
 address=/fsserve.localgrid/192.168.9.3
 address=/authserve.localgrid/192.168.9.4
 address=/cpuserve.localgrid/192.168.9.5" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
+sudo systemctl enable dnsmasq
+sudo systemctl restart dnsmasq
 
 # Prompt for iface if we have a couple. Like on a laptop with eth and wlan
 ipv4iface=''
