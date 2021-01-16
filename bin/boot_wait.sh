@@ -27,7 +27,7 @@ while [ $counter -lt $max_counter -a $success -eq 0 ]
 do
    drawterm="/opt/drawterm/drawterm -h $ip -a $ip -u glenda -G -c 'uptime'"
    echo $drawterm
-   if [ `cat ~/.belagos_pass | $drawterm | grep days | wc -l` -ge 1 ]; then
+   if [ `$drawterm | grep days | wc -l` -ge 1 ]; then
       success=1
    else
       echo $sleep

@@ -1,8 +1,13 @@
 #!/usr/bin/expect -f
 # https://9p.io/wiki/plan9/Vmware_playground_for_plan9/index.html
 
-puts "Enter password for glenda\[echoed\]: "
-gets stdin glenda_pass
+set glenda_pass ''
+if {[info exists ::env(PASS)]} {
+   set glenda_pass $::env(PASS)
+} else {
+   puts "Enter password for glenda\[echoed\]: "
+   gets stdin glenda_pass
+}
 
 set runner [lindex $argv 0]
 

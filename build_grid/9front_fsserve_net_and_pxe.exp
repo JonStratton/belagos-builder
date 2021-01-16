@@ -1,15 +1,19 @@
 #!/usr/bin/expect -f
 # Should be able to just:
-#	echo "MyKeePassPass" | /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "/mnt/term/$PWD/rc/fsserve_build.rc; ip/tftpd"
+#/opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "/mnt/term/$PWD/rc/fsserve_build.rc; ip/tftpd"
 # But it seems to be stalling on the "ip/tftpd" (or fshalt). TODO, work around that better and remove this script
-
-puts "Enter password for glenda\[echoed\]: "
-gets stdin glenda_pass
 
 set timeout -1
 spawn /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G
-expect "password: "
-send "$glenda_pass\r"
+
+# Prompt for password if PASS isnt set
+if {! [info exists ::env(PASS)]} {
+   expect "password: "
+   puts "Enter password for glenda\[echoed\]: "
+   gets stdin glenda_pass
+   send "$glenda_pass\r"
+}
+
 expect "% "
 send "/mnt/term/$::env(PWD)/rc/fsserve_build.rc\r"
 expect "% "

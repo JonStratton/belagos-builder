@@ -1,8 +1,13 @@
 #!/usr/bin/expect -f
 # https://nicolasmontanaro.com/blog/9front-guide/
 
-puts "Enter password for glenda\[echoed\]: "
-gets stdin glenda_pass
+set glenda_pass ''
+if {[info exists ::env(PASS)]} {
+   set glenda_pass $::env(PASS)
+} else {
+   puts "Enter password for glenda\[echoed\]: "
+   gets stdin glenda_pass
+}
 
 set runner [lindex $argv 0]
 
