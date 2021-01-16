@@ -38,8 +38,9 @@ This will do the following:
 1. Set up IP Tables on IPv4, so our VMs can talk to the internet. This may not be needed if you are connecting to a Darknet instead.
 1. Download and Build 9fronts version of drawterm. 
 
-Run the script that starts making the VMs.
+Your running user should now be in the vde2-net group. First, reboot or run the newgrp command. Then run the script that starts making the VMs.
 
+	newgrp vde2-net
 	./build_grid.sh
 
 This will:
