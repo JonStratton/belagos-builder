@@ -14,7 +14,7 @@ if [ $arch = 'x86_64' ]; then
    iso_arch='amd64'
    qemu_arch=$arch
 fi
-local_iso="iso/9front.$iso_arch.iso"
+local_iso="9front.$iso_arch.iso"
 
 [ ! -d img ] && mkdir img
 [ ! -d bin ] && mkdir bin
@@ -39,31 +39,43 @@ fi
 free_mb=`expr $free_disk / 1024`
 fsserve_disk_gb=`expr \( \( $free_mb \* 75 \) / 100 \) / 1024`G
 
-###################
-# Glenda Password #
-###################
+############
+# Password #
+############
+   # Use Glenda's password for the install
+
+if [ ! -f ~/.belagos_pass_glenda ]; then
+   belagos_pass_default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
+   echo "Passord will be stored in ~/.belagos_pass_glenda"
+   read -p "Enter password for glenda(default $belagos_pass_default): " belagos_pass
+   [ -z $belagos_pass ] && belagos_pass=$belagos_pass_default
+   touch ~/.belagos_pass_glenda
+   chmod 600 ~/.belagos_pass_glenda
+   echo $belagos_pass > ~/.belagos_pass_glenda
+fi
+export PASS=`cat ~/.belagos_pass_glenda`
 
 if [ ! -f ~/.belagos_pass ]; then
    belagos_pass_default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
    echo "Passord will be stored in ~/.belagos_pass"
-   read -p "Enter password for glenda(default $belagos_pass_default): " belagos_pass
+   read -p "Enter password for user(default $belagos_pass_default): " belagos_pass
    [ -z $belagos_pass ] && belagos_pass=$belagos_pass_default
    touch ~/.belagos_pass
    chmod 600 ~/.belagos_pass
    echo $belagos_pass > ~/.belagos_pass
 fi
-export PASS=`cat ~/.belagos_pass`
+export USER_PASS=`cat ~/.belagos_pass`
+echo 'export USER_PASS=`cat ~/.belagos_pass`' >> ~/.bashrc
 
 ################
 # Download ISO #
 ################
+   # TODO, replace with torrent to avoid angering 9front
 
 if [ $1 ]; then
    local_iso=$1
    echo "using $local_iso"
 elif [ ! -f $local_iso ]; then
-   # TODO, replace with torrent to avoid angering 9front
-   mkdir iso
    remote_iso=`wget -O - http://9front.org/iso/ 2>/dev/null | grep ".$iso_arch.iso.gz<" | cut -d'"' -f4`
    wget -O $local_iso.gz http://9front.org/iso/$remote_iso
    gunzip $local_iso.gz
@@ -97,11 +109,6 @@ bin/boot_wait.sh 192.168.9.3
 # Run installer via drawterm
 build_grid/9front_fsserve_net_and_pxe.exp
 
-# Boot fsserve in the background and wait until its up
-build_grid/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
-sleep 10
-bin/boot_wait.sh 192.168.9.3
-
 #############
 # AUTHSERVE #
 #############
@@ -112,6 +119,9 @@ chmod u+x bin/run_authserve.sh
 
 qemu-img create -f qcow2 img/9front_authserve.img 1M
 build_grid/9front_authserve.exp bin/run_authserve.sh
+
+# Add new user to fsserve
+/opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "echo newuser $USER >>/srv/cwfs.cmd"
 
 # Run it in the BG as we need it for cpuserve creation
 build_grid/run_headless.exp bin/run_authserve.sh > /dev/null 2>&1 &
@@ -134,3 +144,5 @@ build_grid/9front_cpuserve.exp bin/run_cpuserve.sh
 
 /opt/drawterm/drawterm -h 192.168.9.4 -a 192.168.9.4 -u glenda -G -c "fshalt"
 /opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "fshalt"
+pkill qemu
+export PASS=`cat ~/.belagos_pass`

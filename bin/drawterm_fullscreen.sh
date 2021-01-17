@@ -6,4 +6,4 @@ if [ $res ]; then
    geo="-g $res"
 fi
 
-/opt/drawterm/drawterm -h 192.168.9.5 -a 192.168.9.4 -u glenda $geo
+/opt/drawterm/drawterm -h 192.168.9.5 -a 192.168.9.4 $geo

@@ -19,7 +19,8 @@ sudo chown -R glenda:glenda /home/glenda/img/
 sudo touch /home/glenda/.belagos_pass
 sudo chown glenda:glenda /home/glenda/.belagos_pass
 sudo chmod 600 /home/glenda/.belagos_pass
-cat ~/.belagos_pass | sudo sh -c '( cat > /home/glenda/.belagos_pass )'
+cat ~/.belagos_pass_glenda | sudo sh -c '( cat > /home/glenda/.belagos_pass )'
+rm ~/.belagos_pass_glenda
 
 # Install fsserve service
 sudo sh -c '( echo "[Unit]
