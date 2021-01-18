@@ -2,11 +2,8 @@
 # https://nicolasmontanaro.com/blog/9front-guide/
 
 set glenda_pass ''
-if {[info exists ::env(PASS)]} {
-   set glenda_pass $::env(PASS)
-} else {
-   puts "Enter password for glenda\[echoed\]: "
-   gets stdin glenda_pass
+if {[info exists ::env(GLENDA_PASS)]} {
+   set glenda_pass $::env(GLENDA_PASS)
 }
 
 set runner [lindex $argv 0]
@@ -61,57 +58,37 @@ send "end\r"
 expect "# "
 send "9fs 9fat; echo 'nobootprompt=local!/dev/sd00/fscache -a tcp!*!564' >>/n/9fat/plan9.ini\r"
 expect "# "
-
-# Our network info and PXE
-#send "echo 'auth=authserve.localgrid authdom=localgrid' >> /lib/ndb/local\r"
-#expect "# "
-#send "echo 'ipnet=localgrid ip=192.168.9.0 ipmask=255.255.255.0' >> /lib/ndb/local\r"
-#expect "# "
-#send "echo '    auth=authserve.localgrid' >> /lib/ndb/local\r"
-#expect "# "
-#send "echo '    dnsdom=localgrid' >> /lib/ndb/local\r"
-#expect "# "
-#send "echo '    cpu=cpuserve.localgrid' >> /lib/ndb/local\r"
-#expect "# "
-#send "echo '    fs=fsserve.localgrid' >> /lib/ndb/local\r"
-#expect "# "
-#send "mkdir /cfg/fsserve/\r"
-#expect "# "
-#send "mkdir /cfg/authserve/\r"
-#expect "# "
-#send "mkdir /cfg/cpuserve/\r"
-#expect "# "
-#send "echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/fsserve/cpurc\r"
-#expect "# "
-#send "echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/authserve/cpurc\r"
-#expect "# "
-#send "echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/cpuserve/cpurc\r"
-#expect "# "
-#send "echo 'ip/tftpd' >> /cfg/fsserve/cpurc\r"
-#expect "# "
-#send "echo 'nobootprompt=tls' >> /cfg/pxe/default\r"
-#expect "# "
-#send "echo 'auth=authserve.localgrid' >> /cfg/pxe/default\r"
-#expect "# "
-#send "echo 'fs=fsserve.localgrid' >> /cfg/pxe/default\r"
-#expect "# "
-#send "echo 'vgasize=text' >> /cfg/pxe/default\r"
-#expect "# "
-#send "cat /cfg/plan9.ini | grep -v cdboot | grep -v '#' | grep -v 'vgasize' >> /cfg/pxe/default\r"
-#expect "# "
-#send "cp /cfg/pxe/default /cfg/pxe/52540000ee04\r"
-#expect "# "
-#send "echo 'service=cpu' >> /cfg/pxe/52540000ee04\r"
-#expect "# "
-#send "echo 'nvram=/dev/sd00/nvram' >> /cfg/pxe/52540000ee04\r"
-#expect "# "
-#send "cp /cfg/pxe/52540000ee04 /cfg/pxe/52540000ee05\r"
-#expect "# "
-#send "echo 'cpu=cpuserve.localgrid' >> /cfg/pxe/default\r"
-#expect "# "
 send "fshalt\r"
 expect "# "
 send "2"
 expect "(qemu)"
 send "quit\r"
 expect eof
+
+# Run final installer
+spawn $runner -curses
+expect "# "
+send "mkdir belagos_install\r"
+expect "# "
+send "chmod 777 belagos_install\r"
+expect "# "
+
+# 9mount and copy scripts
+exec mkdir fsserve_9fs
+exec 9mount "tcp!192.168.9.3" fsserve_9fs
+#exec cp rc/* fsserve_9fs/usr/glenda/belagos_install/
+exec cp {*}[glob rc/*.rc] fsserve_9fs/usr/glenda/belagos_install/
+exec 9umount fsserve_9fs
+exec rmdir fsserve_9fs
+
+send "chmod 700 belagos_install/\r"
+expect "# "
+send "belagos_install/fsserve_build.rc\r"
+expect "# "
+send "fshalt\r"
+expect "# "
+send "2"
+expect "(qemu)"
+send "quit\r"
+expect eof
+

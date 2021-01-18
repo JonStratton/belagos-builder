@@ -44,28 +44,19 @@ fsserve_disk_gb=`expr \( \( $free_mb \* 75 \) / 100 \) / 1024`G
 ############
    # Use Glenda's password for the install
 
-if [ ! -f ~/.belagos_pass_glenda ]; then
-   belagos_pass_default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
-   echo "Passord will be stored in ~/.belagos_pass_glenda"
-   read -p "Enter password for glenda(default $belagos_pass_default): " belagos_pass
-   [ -z $belagos_pass ] && belagos_pass=$belagos_pass_default
-   touch ~/.belagos_pass_glenda
-   chmod 600 ~/.belagos_pass_glenda
-   echo $belagos_pass > ~/.belagos_pass_glenda
+if [ ! $GLENDA_PASS ]; then
+   default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
+   read -p "Enter password for glenda(default $default): " GLENDA_PASS
+   [ -z $GLENDA_PASS ] && GLENDA_PASS=$default
+   export GLENDA_PASS
 fi
-export PASS=`cat ~/.belagos_pass_glenda`
 
-if [ ! -f ~/.belagos_pass ]; then
-   belagos_pass_default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
-   echo "Passord will be stored in ~/.belagos_pass"
-   read -p "Enter password for user(default $belagos_pass_default): " belagos_pass
-   [ -z $belagos_pass ] && belagos_pass=$belagos_pass_default
-   touch ~/.belagos_pass
-   chmod 600 ~/.belagos_pass
-   echo $belagos_pass > ~/.belagos_pass
+if [ ! $USER_PASS ]; then
+   default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
+   read -p "Enter password for user(default $default): " USER_PASS
+   [ -z $USER_PASS ] && USER_PASS=$default
+   export USER_PASS
 fi
-export USER_PASS=`cat ~/.belagos_pass`
-echo 'export USER_PASS=`cat ~/.belagos_pass`' >> ~/.bashrc
 
 ################
 # Download ISO #
@@ -81,68 +72,51 @@ elif [ ! -f $local_iso ]; then
    gunzip $local_iso.gz
 fi
 
+################
+# Base Install #
+################
+   # This will be converted to our fsserve
+
+echo "qemu-system-$qemu_arch $kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_base.img -device scsi-hd,drive=vd0 \$*" > bin/base_run.sh
+chmod u+x bin/base_run.sh
+
+# Run base installer directly
+if [ ! -f img/9front_base.img ]; then
+   qemu-img create -f qcow2 img/9front_base.img $fsserve_disk_gb
+   build_grid/9front_base.exp bin/base_run.sh 9front.iso
+fi
+
 ###########
 # FSSERVE #
 ###########
 
-echo "qemu-system-$qemu_arch $kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 \$*" > bin/run_fsserve.sh
-chmod u+x bin/run_fsserve.sh
+echo "qemu-system-$qemu_arch $kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 \$*" > bin/fsserve_run.sh
+chmod u+x bin/fsserve_run.sh
 
-# This can be large, as all other VMs will boot off of this disk
-if [ ! -f img/9front_fsserve.img ]; then
-   qemu-img create -f qcow2 img/9front_fsserve.img $fsserve_disk_gb
-   # Creating base install image
-   build_grid/9front_install.exp bin/run_fsserve.sh $local_iso
-fi
-
-# Back it up as expect is unrelyable with curses
-[ ! -f img/9front_fsserve.img_back ] && cp img/9front_fsserve.img img/9front_fsserve.img_back
-
-# Set up networking and turn on PXE
-build_grid/9front_fsserve.exp bin/run_fsserve.sh
-
-# Boot fsserve in the background and wait until its up
-build_grid/run_headless.exp bin/run_fsserve.sh > /dev/null 2>&1 &
-sleep 10
-bin/boot_wait.sh 192.168.9.3
-
-# Run installer via drawterm
-build_grid/9front_fsserve_net_and_pxe.exp
+bin/fsserve_dependancy.sh
 
 #############
 # AUTHSERVE #
 #############
-# fsserve needs to be done first, as authserve netboots from it
 
-echo "qemu-system-$qemu_arch $kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/run_authserve.sh
-chmod u+x bin/run_authserve.sh
+echo "qemu-system-$qemu_arch $kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/authserve_run.sh
+chmod u+x bin/authserve_run.sh
 
-qemu-img create -f qcow2 img/9front_authserve.img 1M
-build_grid/9front_authserve.exp bin/run_authserve.sh
-
-# Add new user to fsserve
-/opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "echo newuser $USER >>/srv/cwfs.cmd"
-
-# Run it in the BG as we need it for cpuserve creation
-build_grid/run_headless.exp bin/run_authserve.sh > /dev/null 2>&1 &
-sleep 10
-bin/boot_wait.sh 192.168.9.4
+bin/authserve_dependancy.sh
 
 ############
 # CPUSERVE #
 ############
 
-echo "qemu-system-$qemu_arch $kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/run_cpuserve.sh
-chmod u+x bin/run_cpuserve.sh
+echo "qemu-system-$qemu_arch $kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/cpuserve_run.sh
+chmod u+x bin/cpuserve_run.sh
 
-qemu-img create -f qcow2 img/9front_cpuserve.img 1M
-build_grid/9front_cpuserve.exp bin/run_cpuserve.sh
+bin/cpuserve_dependancy.sh
 
 ########################
 # Turn down everything #
 ########################
 
-/opt/drawterm/drawterm -h 192.168.9.4 -a 192.168.9.4 -u glenda -G -c "fshalt"
-/opt/drawterm/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda -G -c "fshalt"
+echo "qemu-system-$qemu_arch $kvm -m 64 -net nic,macaddr=52:54:00:00:EE:06 -net vde,sock=/var/run/vde2/tap0.ctl -boot n \$*" > bin/termserve_run.sh
+chmod u+x bin/termserve_run.sh
 pkill qemu
-export PASS=`cat ~/.belagos_pass`

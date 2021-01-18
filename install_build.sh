@@ -12,15 +12,8 @@ sudo mkdir /home/glenda/bin/
 sudo cp bin/* /home/glenda/bin/
 sudo chown -R glenda:glenda /home/glenda/bin/
 sudo mkdir /home/glenda/img/
-sudo cp img/*img /home/glenda/img/
+sudo cp img/*serve.img /home/glenda/img/
 sudo chown -R glenda:glenda /home/glenda/img/
-
-# Glenda's Password
-sudo touch /home/glenda/.belagos_pass
-sudo chown glenda:glenda /home/glenda/.belagos_pass
-sudo chmod 600 /home/glenda/.belagos_pass
-cat ~/.belagos_pass_glenda | sudo sh -c '( cat > /home/glenda/.belagos_pass )'
-rm ~/.belagos_pass_glenda
 
 # Install fsserve service
 sudo sh -c '( echo "[Unit]
@@ -31,7 +24,7 @@ After=network.target
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/run_systemd.sh bin/run_fsserve.sh
+ExecStart=/home/glenda/bin/fsserve_dependancy.sh
 Restart=on-failure
 
 [Install]
@@ -46,7 +39,7 @@ After=network.target belagos_fsserve.service
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/run_systemd.sh bin/run_authserve.sh 192.168.9.3
+ExecStart=/home/glenda/bin/authserve_dependancy.sh
 Restart=on-failure
 
 [Install]
@@ -61,7 +54,7 @@ After=network.target belagos_fsserve.service belagos_authserve.service
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/run_systemd.sh bin/run_cpuserve.sh 192.168.9.4
+ExecStart=/home/glenda/bin/cpuserve_dependancy.sh
 Restart=on-failure
 
 [Install]
@@ -92,7 +85,6 @@ sudo rm /etc/systemd/system/belagos_fsserve.service
 sudo rm /etc/systemd/system/belagos_authserve.service
 sudo rm /etc/systemd/system/belagos_cpuserve.service
 
-sudo rm /home/glenda/.belagos_pass
 sudo rm -rf /home/glenda/bin/
 sudo rm -rf /home/glenda/img/
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-package_list="dnsmasq iptables-persistent qemu-system-x86 vde2 radvd uml-utilities expect build-essential libx11-dev libxt-dev"
+package_list="dnsmasq iptables-persistent qemu-system-x86 vde2 radvd uml-utilities expect 9mount"
 
 # Add KVM if possible
 if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then
@@ -90,15 +90,6 @@ interface tap0
 };\" > /etc/radvd.conf )"
 sudo systemctl enable radvd
 sudo systemctl restart radvd
-
-# You have to use 9front's Drawterm to connect to 9front it seems
-cd /opt/
-sudo wget https://code.9front.org/hg/drawterm/archive/tip.tar.gz
-sudo tar xzf tip.tar.gz
-sudo rm tip.tar.gz
-sudo mv drawterm-* drawterm
-cd drawterm
-sudo CONF=unix make
 }
 
 #############
@@ -106,8 +97,6 @@ sudo CONF=unix make
 #############
 uninstall()
 {
-sudo rm -rf /opt/drawterm
-
 sudo mv /etc/iptables/rules.v4_back /etc/iptables/rules.v4
 
 sudo rm /etc/network/interfaces.d/tap0.iface

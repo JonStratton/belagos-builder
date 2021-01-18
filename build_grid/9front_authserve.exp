@@ -2,11 +2,8 @@
 # https://9p.io/wiki/plan9/Vmware_playground_for_plan9/index.html
 
 set glenda_pass ""
-if {[info exists ::env(PASS)]} {
-   set glenda_pass $::env(PASS)
-} else {
-   puts "Enter password for glenda\[echoed\]: "
-   gets stdin glenda_pass
+if {[info exists ::env(GLENDA_PASS)]} {
+   set glenda_pass $::env(GLENDA_PASS)
 }
 
 set user_pass ""

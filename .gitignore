@@ -1,4 +1,5 @@
 *.iso
 *.img
-run_*serve.sh
-.belagos_pass
+*_run.sh
+install_base_new_packages.txt
+nohup.out

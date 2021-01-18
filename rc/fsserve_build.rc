@@ -1,5 +1,8 @@
 #!/bin/rc
 
+# Turn off boot prompting
+9fs 9fat; echo 'nobootprompt=local!/dev/sd00/fscache -a tcp!*!564' >>/n/9fat/plan9.ini
+
 # Set up base networking
 echo 'auth=authserve.localgrid authdom=localgrid
 
