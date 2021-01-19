@@ -10,4 +10,8 @@ if [ ! -f img/9front_fsserve.img ]; then
 fi
  
 # 2. Run with no hup
-nohup bin/fsserve_run.sh -nographic &
+if [ $1 = '-d' ]; then
+   nohup bin/fsserve_run.sh -nographic &
+else
+   bin/fsserve_run.sh -nographic
+fi

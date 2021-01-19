@@ -15,4 +15,8 @@ if [ ! -f img/9front_authserve.img ]; then
 fi
 
 # 3. Run with no hup
-nohup bin/authserve_run.sh -nographic &
+if [ $1 = '-d' ]; then
+   nohup bin/authserve_run.sh -nographic &
+else
+   bin/authserve_run.sh -nographic
+fi

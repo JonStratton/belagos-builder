@@ -83,7 +83,7 @@ chmod u+x bin/base_run.sh
 # Run base installer directly
 if [ ! -f img/9front_base.img ]; then
    qemu-img create -f qcow2 img/9front_base.img $fsserve_disk_gb
-   build_grid/9front_base.exp bin/base_run.sh 9front.iso
+   build_grid/9front_base.exp bin/base_run.sh $local_iso
 fi
 
 ###########
@@ -93,7 +93,7 @@ fi
 echo "qemu-system-$qemu_arch $kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 \$*" > bin/fsserve_run.sh
 chmod u+x bin/fsserve_run.sh
 
-bin/fsserve_dependancy.sh
+bin/fsserve_dependancy.sh -d
 
 #############
 # AUTHSERVE #
@@ -102,7 +102,7 @@ bin/fsserve_dependancy.sh
 echo "qemu-system-$qemu_arch $kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/authserve_run.sh
 chmod u+x bin/authserve_run.sh
 
-bin/authserve_dependancy.sh
+bin/authserve_dependancy.sh -d
 
 ############
 # CPUSERVE #
@@ -111,7 +111,7 @@ bin/authserve_dependancy.sh
 echo "qemu-system-$qemu_arch $kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/cpuserve_run.sh
 chmod u+x bin/cpuserve_run.sh
 
-bin/cpuserve_dependancy.sh
+bin/cpuserve_dependancy.sh -d
 
 ########################
 # Turn down everything #

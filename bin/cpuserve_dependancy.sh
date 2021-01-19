@@ -15,4 +15,8 @@ if [ ! -f img/9front_cpuserve.img ]; then
 fi
 
 # 3. Run with no hup
-nohup bin/cpuserve_run.sh -nographic &
+if [ $1 = '-d' ]; then
+   nohup bin/cpuserve_run.sh -nographic &
+else
+   bin/cpuserve_run.sh -nographic
+fi
