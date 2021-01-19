@@ -42,6 +42,7 @@ sudo chmod 2770 /var/run/vde2/
 sudo vde_switch -tap tap0 -s /var/run/vde2/tap0.ctl -m 660 -g vde2-net -M /var/run/vde2/tap0.mgmt --mgmtmode 660 -d
 sudo ip link set dev tap0 down
 sudo ip addr add 192.168.9.1/24 dev tap0
+sudo ip addr add fdfc::1/64 dev tap0
 sudo ip link set dev tap0 up
 
 # Create dnsmasq config for tap0 with some hard coded MACs to IP

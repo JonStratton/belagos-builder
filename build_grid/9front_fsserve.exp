@@ -6,6 +6,11 @@ if {[info exists ::env(GLENDA_PASS)]} {
    set glenda_pass $::env(GLENDA_PASS)
 }
 
+set user_pass ""
+if {[info exists ::env(USER_PASS)]} {
+   set user_pass $::env(USER_PASS)
+}
+
 set runner [lindex $argv 0]
 
 # Turn on CPU Server
@@ -67,6 +72,13 @@ expect eof
 
 # Run final installer
 spawn $runner -curses
+
+if { $user_pass ne "" } {
+   set user $::env(USER)
+   expect "# "
+   send "echo newuser $user >>/srv/cwfs.cmd\r"
+}
+
 expect "# "
 send "mkdir belagos_install\r"
 expect "# "
@@ -76,7 +88,6 @@ expect "# "
 # 9mount and copy scripts
 exec mkdir fsserve_9fs
 exec 9mount "tcp!192.168.9.3" fsserve_9fs
-#exec cp rc/* fsserve_9fs/usr/glenda/belagos_install/
 exec cp {*}[glob rc/*.rc] fsserve_9fs/usr/glenda/belagos_install/
 exec 9umount fsserve_9fs
 exec rmdir fsserve_9fs
@@ -85,6 +96,8 @@ send "chmod 700 belagos_install/\r"
 expect "# "
 send "belagos_install/fsserve_build.rc\r"
 expect "# "
+#send "belagos_install/gui.rc\r"
+#expect "# "
 send "fshalt\r"
 expect "# "
 send "2"

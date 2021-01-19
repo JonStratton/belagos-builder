@@ -32,13 +32,8 @@ send "$glenda_pass\r"
 
 # nvram
 expect "# "
-send "disk/mbr /dev/sd00/data\r"
-expect "# "
-send "disk/fdisk -aw /dev/sd00/data\r"
-expect "# "
-send "disk/prep -a nvram -w /dev/sd00/plan9\r"
-expect "# "
-send "echo clear >/dev/sd00/nvram\r"
+send "belagos_install/small_nvram.rc\r"
+
 expect "# "
 send "auth/wrkey\r"
 expect "authid:"
