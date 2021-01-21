@@ -3,6 +3,10 @@
 # Turn off boot prompting
 9fs 9fat; echo 'nobootprompt=local!/dev/sd00/fscache -a tcp!*!564' >>/n/9fat/plan9.ini
 
+# Change the hostname
+cat /lib/ndb/local | sed 's/sys=cirno/sys=fsserve/g' > /lib/ndb/local2
+mv /lib/ndb/local2 /lib/ndb/local
+
 # Set up base networking
 echo 'auth=authserve.localgrid authdom=localgrid
 
@@ -10,33 +14,41 @@ ipnet=localgrid ip=192.168.9.0 ipmask=255.255.255.0
     auth=authserve.localgrid
     dnsdom=localgrid
     cpu=cpuserve.localgrid
-    fs=fsserve.localgrid' >> /lib/ndb/local
+    fs=fsserve.localgrid
+
+' >> /lib/ndb/local
+
+# Reload network config
+ip/ipconfig
 
 # Networking - Add static route for all IPv6 as it doesnt seem to be using our radvd as the default route
-mkdir /cfg/$sysname/
+mkdir /cfg/fsserve/
 mkdir /cfg/authserve/
 mkdir /cfg/cpuserve/
-echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/$sysname/cpurc
+echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/fsserve/cpurc
 echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/authserve/cpurc
 echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/cpuserve/cpurc
 
 # PXE
-echo 'ip/tftpd' >> /cfg/$sysname/cpurc
+echo 'ip/tftpd' >> /cfg/fsserve/cpurc
 
-# Base it on the cd plan9.ini, mostly for the bootfile arch
+# PXE - Default
 echo 'nobootprompt=tls
 auth=authserve.localgrid
 fs=fsserve.localgrid
-vgasize=text' > /cfg/pxe/default
-cat /cfg/plan9.ini | grep -v cdboot | grep -v '#' | grep -v 'vgasize' >> /cfg/pxe/default
+cpu=cpuserve.localgrid
+mouseport=ask
+monitor=ask
+vgasize=ask' > /cfg/pxe/default
+grep bootfile /cfg/plan9.ini >> /cfg/pxe/default
 
-# PXE - Add entry for authserve.
-cp /cfg/pxe/default /cfg/pxe/52540000ee04
-echo 'service=cpu
-nvram=/dev/sd00/nvram' >> /cfg/pxe/52540000ee04
-
-# PXE - Add entry for cpuserve
+# PXE - authserve and cpuserve
+echo 'nobootprompt=tls
+auth=authserve.localgrid
+fs=fsserve.localgrid
+vgasize=text
+service=cpu
+nvram=/dev/sd00/nvram' > /cfg/pxe/52540000ee04
+grep bootfile /cfg/plan9.ini >> /cfg/pxe/52540000ee04
 cp /cfg/pxe/52540000ee04 /cfg/pxe/52540000ee05
 
-# PXE - default: add cpuserve
-echo 'cpu=cpuserve.localgrid' >> /cfg/pxe/default
