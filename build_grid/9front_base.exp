@@ -13,7 +13,7 @@ sleep 5
 send "\r"
 expect "user*:*"
 send "\r"
-expect "vgasize is (text, 640x480x8, 1024x768x16, ...)"
+expect "vgasize is *\] "
 send "text\r"
 expect "term% "
 send "inst/start\r"

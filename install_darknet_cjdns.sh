@@ -18,7 +18,7 @@ done
 echo $new_packages > ./install_darknet_cjdns_new_packages.txt
 
 # Dont install if we already have a tun0. Just do everything around it.
-if [ ! -f /sys/class/net/tun0 ]; then
+if [ ! -L /sys/class/net/tun0 ]; then
    # Build cjdns
    wget -O cjdns.tar.gz https://github.com/cjdelisle/cjdns/archive/master.tar.gz
    tar xzf cjdns.tar.gz
