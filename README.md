@@ -1,5 +1,4 @@
 # belagos-builder
-![BelaGOS Logo](bela_black.png?raw=true | width=50)
 Turns a Debian install into BelagOS. Currently this is some shell and Expect scripts to build some 9front VMs.
 
 ## BelaGOS - Black Emulated Grid Operating System
