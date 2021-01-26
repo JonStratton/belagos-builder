@@ -51,10 +51,6 @@ This will:
 1. Boots the cpuserve from the fsserve via PXE and creates nvram.
 1. Shuts everything down.
 
-All servers should have cpu turned on. So you can connect to them with drawterm:
-
-	/opt/drawterm/drawterm -h 192.168.9.3 -u glenda
-
 Optionally, you can also plug your grid into a darknet with one of the darknet(IPv6 overlay mesh network) scripts.
 
 	./make_darknet_yggdrasil.sh
@@ -62,3 +58,19 @@ Optionally, you can also plug your grid into a darknet with one of the darknet(I
 This will:
 1. Install the software. 
 1. Create IPv6 iptables rules to forward IPv6 connections between out vde2 network and the darknet.
+
+If you want, you can now test by running the FSServe alone:
+
+	bin/fsserve_run.sh -curses
+
+If it looks good, you can now install it on the built grid onto the system:
+
+	./install_build.sh
+
+1. Create a new “glenda” user.
+1. Copy the images and runners into glenda’s home directory.
+1. Create service files than run the Vms on boot (as glenda).
+
+You should now be able to connect to the grid with the terminal VM:
+
+	bin/termserve_run.sh
