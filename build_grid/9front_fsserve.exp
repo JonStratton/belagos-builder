@@ -1,12 +1,12 @@
 #!/usr/bin/expect -f
 # https://nicolasmontanaro.com/blog/9front-guide/
 
-set glenda_pass ''
+set glenda_pass 'changeme'
 if {[info exists ::env(GLENDA_PASS)]} {
    set glenda_pass $::env(GLENDA_PASS)
 }
 
-set user_pass ""
+set user_pass 'changeme'
 if {[info exists ::env(USER_PASS)]} {
    set user_pass $::env(USER_PASS)
 }
@@ -23,6 +23,10 @@ send "\r"
 expect "term% "
 send "9fs 9fat; echo 'service=cpu' >>/n/9fat/plan9.ini\r"
 expect "term% "
+send "echo '*acpi=1' >>/n/9fat/plan9.ini\r"
+expect "term% "
+send "echo 'console=0' >>/n/9fat/plan9.ini\r"
+expect "term% "
 send "fshalt\r"
 expect "term% "
 send "2"
@@ -31,7 +35,7 @@ send "quit\r"
 expect eof
 
 # Create user?
-spawn $runner -curses
+spawn $runner -nographic
 expect "boot*\] "
 send "\r"
 expect "authid:*"
@@ -44,14 +48,10 @@ expect "password:*"
 send "$glenda_pass\r"
 expect "# "
 send "fshalt\r"
-expect "# "
-send "2"
-expect "(qemu)"
-send "quit\r"
 expect eof
 
 # Turn on auth
-spawn $runner -curses
+spawn $runner -nographic
 expect "boot*\] "
 send "local!/dev/sd00/fscache -c\r"
 expect "config:*"
@@ -64,14 +64,10 @@ expect "# "
 send "9fs 9fat; echo 'nobootprompt=local!/dev/sd00/fscache -a tcp!*!564' >>/n/9fat/plan9.ini\r"
 expect "# "
 send "fshalt\r"
-expect "# "
-send "2"
-expect "(qemu)"
-send "quit\r"
 expect eof
 
 # Run final installer
-spawn $runner -curses
+spawn $runner -nographic
 
 if { $user_pass ne "" } {
    set user $::env(USER)
@@ -101,9 +97,4 @@ expect "# "
 #send "belagos_install/gui.rc\r"
 #expect "# "
 send "fshalt\r"
-expect "# "
-send "2"
-expect "(qemu)"
-send "quit\r"
 expect eof
-

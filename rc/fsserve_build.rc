@@ -1,7 +1,7 @@
 #!/bin/rc
 
 # Turn off boot prompting
-9fs 9fat; echo 'nobootprompt=local!/dev/sd00/fscache -a tcp!*!564' >>/n/9fat/plan9.ini
+#9fs 9fat; echo 'nobootprompt=local!/dev/sd00/fscache -a tcp!*!564' >>/n/9fat/plan9.ini
 
 # Change the hostname
 cat /lib/ndb/local | sed 's/sys=cirno/sys=fsserve/g' > /lib/ndb/local2
@@ -33,22 +33,26 @@ echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/cpuserve/cpurc
 echo 'ip/tftpd' >> /cfg/fsserve/cpurc
 
 # PXE - Default
-echo 'nobootprompt=tls
+echo '*acpi=1
+nobootprompt=tls
 auth=authserve.localgrid
 fs=fsserve.localgrid
 cpu=cpuserve.localgrid
 mouseport=ask
 monitor=ask
-vgasize=ask' > /cfg/pxe/default
+vgasize=ask
+console=0' > /cfg/pxe/default
 grep bootfile /cfg/plan9.ini >> /cfg/pxe/default
 
 # PXE - authserve and cpuserve
-echo 'nobootprompt=tls
+echo '*acpi=1
+nobootprompt=tls
 auth=authserve.localgrid
 fs=fsserve.localgrid
 vgasize=text
 service=cpu
-nvram=/dev/sd00/nvram' > /cfg/pxe/52540000ee04
+nvram=/dev/sd00/nvram
+console=0' > /cfg/pxe/52540000ee04
 grep bootfile /cfg/plan9.ini >> /cfg/pxe/52540000ee04
 cp /cfg/pxe/52540000ee04 /cfg/pxe/52540000ee05
 

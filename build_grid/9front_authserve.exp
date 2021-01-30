@@ -16,7 +16,7 @@ set runner [lindex $argv 0]
 set timeout -1
 
 # Create the nvram partition
-spawn $runner -curses
+spawn $runner -nographic
 expect "authid:"
 send "glenda\r"
 expect "authdom:"
@@ -46,14 +46,10 @@ expect "password:"
 send "$glenda_pass\r"
 expect "# "
 send "fshalt\r"
-expect "# "
-send "2"
-expect "(qemu)"
-send "quit\r"
 expect eof
 
 # Create Users
-spawn $runner -curses
+spawn $runner -nographic
 expect "# "
 send "auth/changeuser glenda\r"
 expect "Password:"
@@ -101,8 +97,4 @@ if { $user_pass ne "" } {
 
 expect "# "
 send "fshalt\r"
-expect "# "
-send "2"
-expect "(qemu)"
-send "quit\r"
 expect eof

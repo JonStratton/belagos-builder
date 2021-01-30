@@ -9,7 +9,7 @@ if {[info exists ::env(GLENDA_PASS)]} {
 set runner [lindex $argv 0]
 
 set timeout -1
-spawn $runner -curses
+spawn $runner -nographic
 expect "authid:"
 send "glenda\r"
 expect "authdom:"
@@ -35,8 +35,4 @@ expect "password:"
 send "$glenda_pass\r"
 expect "# "
 send "fshalt\r"
-expect "# "
-send "2"
-expect "(qemu)"
-send "quit\r"
 expect eof
