@@ -1,3 +1,4 @@
+![BelaGOS Logo](bela_black.png?raw=true)
 # belagos-builder
 Turns a Debian install into BelagOS. Currently this is some shell and Expect scripts to build some 9front VMs.
 
@@ -9,12 +10,10 @@ I’m creating this because:
 1. I think it would be funny to have script kiddies port scan a Darknet node, see a Plan 9 machine, and think "What the hell?!".
 
 ### Short Term:
-1. Host machine also mounts the 9p File Server for easy transfers.
 1. Rio's Dark theme, so it looks all Cyberpunk.
 
 ### Long Term Goals:
 1. Different qemu CPU servers for different CPU Archetectures.
-1. Boots into Drawterm fullscreen, or Qemu fullscreen with a 9front Terminal.
 1. SSH and a Plan 9 X server autoconfiged to the host, maybe with a devoted user account on the host. So the 9front Grid can run X11 apps on the host instead of via like a VM in 9front.
 
 ### Current Status
@@ -36,7 +35,7 @@ This will do the following:
 1. Add the running user to the "vde2-net" group and create a "tap0" interface for our VM network.
 1. Configure dnsmasq for a 192.168.9.X network and set static IPs/Names for some of our VM MAC addresses and also set up PXE.
 1. Set up IP Tables on IPv4, so our VMs can talk to the internet. This may not be needed if you are connecting to a Darknet instead.
-1. Download and Build 9fronts version of drawterm. 
+1. Download and Build 9fronts version of drawterm.
 
 Your running user should now be in the vde2-net group. First, reboot or run the newgrp command. Then run the script that starts making the VMs.
 
@@ -44,7 +43,6 @@ Your running user should now be in the vde2-net group. First, reboot or run the 
 	./build_grid.sh
 
 This will:
-1. Make a keepass file to store Glenda's password. 
 1. Download 9front for the CPU architecture. You can also pass in an ISO as a filename alternatively.
 1. Attempts to make the file server (fsserve) based in the ISO with qemu and expect. Turns on PXE.
 1. Boots the authserve from the fsserve via PXE. Creates the nvram in the authserve and reset glenda's password.
@@ -59,9 +57,9 @@ This will:
 1. Install the software. 
 1. Create IPv6 iptables rules to forward IPv6 connections between out vde2 network and the darknet.
 
-If you want, you can now test by running the FSServe alone:
+If you want, you can now test by running the FSServe alone in a terminal:
 
-	bin/fsserve_run.sh -curses
+	bin/fsserve_run.sh -nographic
 
 If it looks good, you can now install it on the built grid onto the system:
 
