@@ -1,12 +1,37 @@
 #!/bin/rc
 
-# 9front rio.tron
 9fs 9front
 cd $home/tmp
-cp /n/extra/rio.tron.tgz .
-tar xzf rio.tron.tgz
-cd rio.tron
+
+# 9front rio.amber
+tar xzf /n/extra/rio.amber.tgz
+cd rio.amber
 ./install
+mv /bin/rio /bin/rio.snore
+mv /bin/rio.amber /bin/rio
 cd ..
-rm -rf rio.tron
-rm rio.tron.tgz
+rm -rf rio.amber
+
+# 9front vt.green
+tar xzf /n/extra/vt.green.tgz
+cd vt.green
+mk
+mv *.out $home/bin/vt.green
+cd ..
+rm -rf vt.green
+
+# 9front mothra.black
+tar xzf /n/extra/mothra.black.tgz
+cd mothra.black
+mk
+mv *.out $home/bin/mothra.black
+cd ..
+rm -rf mothra.black
+
+# 9front stats.amber
+tar xzf /n/extra/stats.amber.tgz
+cd stats.amber
+mk
+mv *.out $home/bin/stats.amber
+cd ..
+rm -rf stats.amber

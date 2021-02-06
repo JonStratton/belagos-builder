@@ -28,6 +28,18 @@ sudo sh -c '( ip6tables-save > /etc/iptables/rules.v6 )'
 
 sudo sh -c '( echo "net.ipv6.conf.all.forwarding=1
 net.ipv6.ip_forward = 1" > /etc/sysctl.d/belagos-darknet-sysctl.conf )'
+
+################
+# Danger Zone! #
+################
+	# Warning: must be at least this cool to progress -> 9
+
+## fsserve - expose fs
+#ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:564
+
+## cpuserve - expose auth?
+#ip6tables -t nat -A PREROUTING -p tcp --dport 17019 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17019
+#ip6tables -t nat -A PREROUTING -p tcp --dport 17020 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17020
 }
 
 #############

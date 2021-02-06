@@ -20,9 +20,9 @@ I’m creating this because:
 
 This is a set of tools that creates a small self contained grid of plan9 qemu VMs on a vde2 network. The machines it creates are:
 
-	fsserve.localgrid / 192.168.9.3
-	authserve.localgrid / 192.168.9.4
-	cpuserve.localgrid / 192.168.9.5
+	fsserve.localgrid / 192.168.9.3 / fdfc::5054:ff:fe00:ee03
+	authserve.localgrid / 192.168.9.4 / fdfc::5054:ff:fe00:ee04
+	cpuserve.localgrid / 192.168.9.5 / fdfc::5054:ff:fe00:ee05
 
 ## How to Install
 
@@ -51,7 +51,7 @@ This will:
 
 Optionally, you can also plug your grid into a darknet with one of the darknet(IPv6 overlay mesh network) scripts.
 
-	./make_darknet_yggdrasil.sh
+	./make_darknet.sh
 
 This will:
 1. Install the software. 
