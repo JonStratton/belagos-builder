@@ -37,7 +37,10 @@ net.ipv6.ip_forward = 1" > /etc/sysctl.d/belagos-darknet-sysctl.conf )'
 ## fsserve - expose fs
 #ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:564
 
-## cpuserve - expose auth?
+## authserve - expose auth
+#ip6tables -t nat -A PREROUTING -p tcp --dport 567 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:567
+
+## cpuserve - expose cpu
 #ip6tables -t nat -A PREROUTING -p tcp --dport 17019 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17019
 #ip6tables -t nat -A PREROUTING -p tcp --dport 17020 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17020
 }
