@@ -35,14 +35,20 @@ net.ipv6.ip_forward = 1" > /etc/sysctl.d/belagos-darknet-sysctl.conf )'
 	# Warning: must be at least this cool to progress -> 9
 
 ## fsserve - expose fs
-#ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:564
+#sudo ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:564
+
+## fsserve - expose tftp for pxe booting... probably not a good idea.
+#sudo ip6tables -t nat -A PREROUTING -p udp --dport 69 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:69
 
 ## authserve - expose auth
-#ip6tables -t nat -A PREROUTING -p tcp --dport 567 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:567
+#sudo ip6tables -t nat -A PREROUTING -p tcp --dport 567 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee04]:567
 
 ## cpuserve - expose cpu
-#ip6tables -t nat -A PREROUTING -p tcp --dport 17019 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17019
-#ip6tables -t nat -A PREROUTING -p tcp --dport 17020 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17020
+#sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17019 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17019
+#sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17020 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17020
+
+## Save rules for next boot
+# sudo sh -c '( ip6tables-save > /etc/iptables/rules.v6 )'
 }
 
 #############

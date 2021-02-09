@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # 1. Check Dep IP Addresses. If up, move on.
-bin/boot_wait.sh 192.168.9.3:17019
+bin/boot_wait.sh 192.168.9.3:564
 wait_code=$?
 if [ $wait_code -ne 0 ]; then
-   >&2 echo "192.168.9.3:17019 doesnt appear to be up. Giving up."
+   >&2 echo "192.168.9.3:564 doesnt appear to be up. Giving up."
    exit $wait_code
 fi
 

@@ -7,12 +7,17 @@ install()
 # Create local glenda, the user that will run the vms
 sudo useradd glenda -m --groups vde2-net
 
+# Add to glenda to KVM if needed.
+if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then
+   sudo usermod -a -G kvm glenda
+fi
+
 # Copy / Move stuff over.
 sudo mkdir /home/glenda/bin/
 sudo cp bin/* /home/glenda/bin/
 sudo chown -R glenda:glenda /home/glenda/bin/
 sudo mkdir /home/glenda/img/
-sudo cp img/*serve.img /home/glenda/img/
+sudo mv img/*serve.img /home/glenda/img/
 sudo chown -R glenda:glenda /home/glenda/img/
 
 # Install fsserve service

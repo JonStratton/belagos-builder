@@ -27,9 +27,13 @@ local_iso="9front.$iso_arch.iso"
 # 512 for base debian gui, 64 for each plan9vm. Split the rest between the fsserve and the cpuserve(most)
 total_core=`cat /proc/meminfo | grep "^MemTotal:" | awk '{print $2}'`
 core_free_mb=`expr \( $total_core / 1024 \) - 512 - \( 64 \* 3 \)`
-fsserve_core=`expr \( \( $core_free_mb \* 25 \) / 100 \) + 64`
-cpuserve_core=`expr \( \( $core_free_mb \* 75 \) / 100 \) + 64`
-authserve_core=64
+fsserve_core_default=`expr \( \( $core_free_mb \* 25 \) / 100 \) + 64`
+cpuserve_core_default=`expr \( \( $core_free_mb \* 75 \) / 100 \) + 64`
+authserve_core_default=64
+
+# Overwrite defaults if above 2gb for 32 bit VMs.
+[ $arch = 'i686' ] && [ $fsserve_core_default -gt 2000 ] && fsserve_core_default=2000
+[ $arch = 'i686' ] && [ $cpuserve_core_default -gt 2000 ] && cpuserve_core_default=2000
 
 # 75% of the free disk for fsserve
 free_disk=`df -k | grep '/home/$' | awk '{print $4}'`
@@ -37,7 +41,21 @@ if [ ! $free_disk ]; then
    free_disk=`df -k | grep ' /$' | awk '{print $4}'`
 fi
 free_mb=`expr $free_disk / 1024`
-fsserve_disk_gb=`expr \( \( $free_mb \* 75 \) / 100 \) / 1024`G
+fsserve_disk_gb_default=`expr \( \( $free_mb \* 75 \) / 100 \) / 1024`G
+
+# Warn on RAM and Disk.
+[ $core_free_mb -lt 704 ] && echo "Warning, you seem to have less RAM than can run your base OS plus 3 VMs"
+[ $free_mb -lt 10240 ] && echo "Warning, you seem to have less than 10G free. Installer may not work(???)."
+
+# Prompt for values
+read -p "RAM in MB for fsserve(default $fsserve_core_default): " fsserve_core
+[ -z $fsserve_core ] && fsserve_core=$fsserve_core_default
+read -p "RAM in MB for cpuserve(default $cpuserve_core_default): " cpuserve_core
+[ -z $cpuserve_core ] && cpuserve_core=$cpuserve_core_default
+read -p "RAM in MB for authserve(default $authserve_core_default): " authserve_core
+[ -z $authserve_core ] && authserve_core=$authserve_core_default
+read -p "Disk for fsserve(default $fsserve_disk_gb_default): " fsserve_disk_gb
+[ -z $fsserve_disk_gb ] && fsserve_disk_gb=$fsserve_disk_gb_default
 
 ############
 # Password #
