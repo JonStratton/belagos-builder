@@ -25,9 +25,11 @@ ip/ipconfig
 mkdir /cfg/fsserve/
 mkdir /cfg/authserve/
 mkdir /cfg/cpuserve/
+mkdir /cfg/termserve/
 echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/fsserve/cpurc
 echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/authserve/cpurc
 echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/cpuserve/cpurc
+echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/termserve/termrc
 
 # PXE
 echo 'ip/tftpd' >> /cfg/fsserve/cpurc

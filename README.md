@@ -16,6 +16,7 @@ This is a set of tools that creates a small self contained grid of plan9 qemu VM
 	fsserve.localgrid / 192.168.9.3 / fdfc::5054:ff:fe00:ee03
 	authserve.localgrid / 192.168.9.4 / fdfc::5054:ff:fe00:ee04
 	cpuserve.localgrid / 192.168.9.5 / fdfc::5054:ff:fe00:ee05
+	termserve.localgrid / 192.168.9.6 / fdfc::5054:ff:fe00:ee06
 
 ## How to Install
 
@@ -41,9 +42,9 @@ This will:
 1. Boots the cpuserve from the fsserve via PXE and creates nvram.
 1. Shuts everything down.
 
-Optionally, you can also plug your grid into a darknet with one of the darknet(IPv6 overlay mesh network) scripts.
+Optionally, you can also plug your grid into a Yggdrasil with one of the darknet(IPv6 overlay mesh network) scripts.
 
-	./make_darknet.sh
+	./install_yggdrasil.sh
 
 This will:
 1. Install Yggdrasil software. 

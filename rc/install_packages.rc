@@ -1,6 +1,11 @@
 #!/bin/rc
 
 9fs 9front
+
+# X11/equis
+#cd /
+#tar xzf /n/pkg/386/equis*.tbz
+
 cd $home/tmp
 
 # 9front rio.amber
@@ -16,7 +21,7 @@ rm -rf rio.amber
 tar xzf /n/extra/vt.green.tgz
 cd vt.green
 mk
-mv *.out $home/bin/vt.green
+mk install
 cd ..
 rm -rf vt.green
 
@@ -24,7 +29,7 @@ rm -rf vt.green
 tar xzf /n/extra/mothra.black.tgz
 cd mothra.black
 mk
-mv *.out $home/bin/mothra.black
+mk install
 cd ..
 rm -rf mothra.black
 
@@ -32,6 +37,6 @@ rm -rf mothra.black
 tar xzf /n/extra/stats.amber.tgz
 cd stats.amber
 mk
-mv *.out $home/bin/stats.amber
+mk install
 cd ..
 rm -rf stats.amber

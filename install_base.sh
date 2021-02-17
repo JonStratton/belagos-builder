@@ -56,10 +56,12 @@ dhcp-boot=386/9bootpxe,fsserve,192.168.9.3
 dhcp-host=52:54:00:00:EE:03,fsserve,192.168.9.3
 dhcp-host=52:54:00:00:EE:04,authserve,192.168.9.4
 dhcp-host=52:54:00:00:EE:05,cpuserve,192.168.9.5
+dhcp-host=52:54:00:00:EE:06,cpuserve,192.168.9.6
 address=/host.localgrid/192.168.9.1
 address=/fsserve.localgrid/192.168.9.3
 address=/authserve.localgrid/192.168.9.4
-address=/cpuserve.localgrid/192.168.9.5" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
+address=/cpuserve.localgrid/192.168.9.5
+address=/termserve.localgrid/192.168.9.6" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
 sudo systemctl enable dnsmasq
 sudo systemctl restart dnsmasq
 
