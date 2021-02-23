@@ -65,23 +65,9 @@ address=/termserve.localgrid/192.168.9.6" > /etc/dnsmasq.d/belagos-dnsmasq.conf 
 sudo systemctl enable dnsmasq
 sudo systemctl restart dnsmasq
 
-# Prompt for iface if we have a couple. Like on a laptop with eth and wlan
-ipv4iface=''
-if [ `ls -1 /sys/class/net/ | grep -v tun0 | grep -v tap0 | grep -v lo | wc -l` -eq 1 ]; then
-   ipv4iface=`ls -1 /sys/class/net/ | grep -v tun0 | grep -v tap0 | grep -v lo`
-else
-   ifaces=`ls -1 /sys/class/net/ | grep -v tun0 | grep -v tap0 | grep -v lo`
-   read -p "Enter IPv4 interface that has an internet connection($ifaces): " ipv4iface
-fi
-
 # IP Tables; allow tap0 to talk to the outside via ethernet
-sudo cp /etc/iptables/rules.v4 /etc/iptables/rules.v4_back
-sudo iptables -t nat -A POSTROUTING -o $ipv4iface -j MASQUERADE
-sudo iptables -A FORWARD -i $ipv4iface -o tap0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-sudo iptables -A FORWARD -i tap0 -o $ipv4iface -j ACCEPT
-sudo sh -c '( iptables-save > /etc/iptables/rules.v4 )'
-
 sudo sh -c '( echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/belagos-sysctl.conf )'
+sudo bin/vde_find_internet.sh
 
 # radvd, but it doesnt seem like it works in plan 9. But it does on OpenBSD.
 sudo sh -c "( echo \"

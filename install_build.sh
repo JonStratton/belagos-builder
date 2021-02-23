@@ -19,19 +19,30 @@ sudo chown -R glenda:glenda /home/glenda/bin/
 sudo mkdir /home/glenda/img/
 sudo mv img/*serve.img /home/glenda/img/
 sudo chown -R glenda:glenda /home/glenda/img/
+sudo cp bin/vde_find_internet.sh /usr/local/sbin/
+
+# Keep checking interfaces until one has an internet connection. Than plug it into vde
+sudo sh -c '( echo "[Unit]
+Description=Belagos Find Internet Service
+After=network.target mesh_micro.service
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/vde_find_internet.sh
+Restart=on-failure
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/belagos_find_internet.service )'
 
 # Install fsserve service
 sudo sh -c '( echo "[Unit]
 Description=Belagos fsserve Service
 After=network.target
-
 [Service]
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
 ExecStart=/home/glenda/bin/fsserve_dependancy.sh
 Restart=on-failure
-
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/belagos_fsserve.service )'
 
@@ -39,14 +50,12 @@ WantedBy=multi-user.target" > /etc/systemd/system/belagos_fsserve.service )'
 sudo sh -c '( echo "[Unit]
 Description=Belagos authserve Service
 After=network.target belagos_fsserve.service
-
 [Service]
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
 ExecStart=/home/glenda/bin/authserve_dependancy.sh
 Restart=on-failure
-
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/belagos_authserve.service )'
 
@@ -54,21 +63,21 @@ WantedBy=multi-user.target" > /etc/systemd/system/belagos_authserve.service )'
 sudo sh -c '( echo "[Unit]
 Description=Belagos cpuserve Service
 After=network.target belagos_fsserve.service belagos_authserve.service
-
 [Service]
 Type=simple
 User=glenda
 WorkingDirectory=/home/glenda
 ExecStart=/home/glenda/bin/cpuserve_dependancy.sh
 Restart=on-failure
-
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/belagos_cpuserve.service )'
 
 sudo systemctl daemon-reload
+sudo systemctl enable belagos_find_internet.service
 sudo systemctl enable belagos_fsserve.service
 sudo systemctl enable belagos_authserve.service
 sudo systemctl enable belagos_cpuserve.service
+sudo systemctl start belagos_find_internet.service
 sudo systemctl start belagos_fsserve.service
 sudo systemctl start belagos_authserve.service
 sudo systemctl start belagos_cpuserve.service
