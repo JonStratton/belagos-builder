@@ -26,9 +26,8 @@ sudo sh -c '( echo "[Unit]
 Description=Belagos Find Internet Service
 After=network.target mesh_micro.service
 [Service]
-Type=simple
+Type=oneshot
 ExecStart=/usr/local/sbin/vde_find_internet.sh
-Restart=on-failure
 RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/belagos_find_internet.service )'
