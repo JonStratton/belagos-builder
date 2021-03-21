@@ -19,18 +19,6 @@ sudo chown -R glenda:glenda /home/glenda/bin/
 sudo mkdir /home/glenda/img/
 sudo mv img/*serve.img /home/glenda/img/
 sudo chown -R glenda:glenda /home/glenda/img/
-sudo cp bin/vde_find_internet.sh /usr/local/sbin/
-
-# Keep checking interfaces until one has an internet connection. Than plug it into vde
-sudo sh -c '( echo "[Unit]
-Description=Belagos Find Internet Service
-After=network.target mesh_micro.service
-[Service]
-Type=oneshot
-ExecStart=/usr/local/sbin/vde_find_internet.sh
-RemainAfterExit=yes
-[Install]
-WantedBy=multi-user.target" > /etc/systemd/system/belagos_find_internet.service )'
 
 # Install fsserve service
 sudo sh -c '( echo "[Unit]
@@ -72,11 +60,9 @@ Restart=on-failure
 WantedBy=multi-user.target" > /etc/systemd/system/belagos_cpuserve.service )'
 
 sudo systemctl daemon-reload
-sudo systemctl enable belagos_find_internet.service
 sudo systemctl enable belagos_fsserve.service
 sudo systemctl enable belagos_authserve.service
 sudo systemctl enable belagos_cpuserve.service
-sudo systemctl start belagos_find_internet.service
 sudo systemctl start belagos_fsserve.service
 sudo systemctl start belagos_authserve.service
 sudo systemctl start belagos_cpuserve.service

@@ -23,6 +23,7 @@ done;
 # IP Tables; allow tap0 to talk to the outside via ethernet
 if [ -n "$internet_interface" ]; then
    echo "Using $internet_interface"
+   sudo sysctl -w net.ipv4.ip_forward=1
    sudo iptables -t nat -A POSTROUTING -o $internet_interface -j MASQUERADE
    sudo iptables -A FORWARD -i $internet_interface -o tap0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
    sudo iptables -A FORWARD -i tap0 -o $internet_interface -j ACCEPT

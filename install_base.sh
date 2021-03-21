@@ -1,6 +1,6 @@
 #!/bin/sh
 
-package_list="dnsmasq iptables-persistent qemu-system-x86 vde2 radvd uml-utilities expect 9mount"
+package_list="dnsmasq iptables-persistent qemu-system-x86 vde2 uml-utilities expect 9mount"
 
 # Add KVM if possible
 if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then
@@ -64,22 +64,6 @@ address=/cpuserve.localgrid/192.168.9.5
 address=/termserve.localgrid/192.168.9.6" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
 sudo systemctl enable dnsmasq
 sudo systemctl restart dnsmasq
-
-# IP Tables; allow tap0 to talk to the outside via ethernet
-sudo sh -c '( echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/belagos-sysctl.conf )'
-sudo bin/vde_find_internet.sh
-
-# radvd, but it doesnt seem like it works in plan 9. But it does on OpenBSD.
-sudo sh -c "( echo \"
-interface tap0
-{
-   AdvSendAdvert on;
-   prefix fdfc::1/64 {
-      AdvRouterAddr on;
-   };
-};\" > /etc/radvd.conf )"
-sudo systemctl enable radvd
-sudo systemctl restart radvd
 }
 
 #############
@@ -87,13 +71,6 @@ sudo systemctl restart radvd
 #############
 uninstall()
 {
-sudo mv /etc/iptables/rules.v4_back /etc/iptables/rules.v4
-
-sudo rm /etc/network/interfaces.d/tap0.iface
-sudo rm /etc/dnsmasq.d/belagos-dnsmasq.conf
-sudo rm /etc/sysctl.d/belagos-sysctl.conf
-sudo rm /etc/radvd.conf
-
 # Remove Packages
 sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./install_base_new_packages.txt`
 rm ./new_packages.txt
