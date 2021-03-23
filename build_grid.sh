@@ -100,8 +100,19 @@ chmod u+x bin/base_run.sh
 
 # Run base installer directly
 if [ ! -f img/9front_base.img ]; then
+   # Pull the kern and init out, so we can boot in console mode
+   mkdir iso_mount
+   sudo mount -t iso9660 -o loop $local_iso iso_mount
+   cp iso_mount/cfg/plan9.ini .
+   chmod 644 ./plan9.ini
+   echo "console=0\n*acpi=1" >> ./plan9.ini
+
    qemu-img create -f qcow2 img/9front_base.img $fsserve_disk_gb
    build_grid/9front_base.exp bin/base_run.sh $local_iso
+
+   rm ./plan9.ini
+   sudo umount iso_mount
+   rmdir iso_mount
 fi
 
 ###########

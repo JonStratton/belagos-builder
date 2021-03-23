@@ -15,7 +15,7 @@ set runner [lindex $argv 0]
 
 # Turn on CPU Server
 set timeout -1
-spawn $runner -curses
+spawn $runner -nographic
 expect "boot*\] "
 send "\r"
 expect "user*:*"
@@ -23,15 +23,7 @@ send "\r"
 expect "term% "
 send "9fs 9fat; echo 'service=cpu' >>/n/9fat/plan9.ini\r"
 expect "term% "
-send "echo '*acpi=1' >>/n/9fat/plan9.ini\r"
-expect "term% "
-send "echo 'console=0' >>/n/9fat/plan9.ini\r"
-expect "term% "
 send "fshalt\r"
-expect "term% "
-send "2"
-expect "(qemu)"
-send "quit\r"
 expect eof
 
 # Create user?

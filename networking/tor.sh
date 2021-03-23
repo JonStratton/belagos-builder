@@ -23,6 +23,7 @@ DNSPort 192.168.9.1:5353\" >> /etc/tor/torrc )"
    sudo iptables -t nat -A PREROUTING -i tap0 -p udp --dport 53 -j REDIRECT --to-ports 5353
    sudo iptables -t nat -A PREROUTING -i tap0 -p udp --dport 5353 -j REDIRECT --to-ports 5353
    sudo iptables -t nat -A PREROUTING -i tap0 -p tcp --syn -j REDIRECT --to-ports 9040
+   sudo sh -c '( iptables-save > /etc/iptables/rules.v4 )'
 }
 
 inbound()
