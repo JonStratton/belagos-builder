@@ -1,35 +1,54 @@
 #!/bin/rc
 
-# Change the hostname
-cat /lib/ndb/local | sed 's/sys=cirno/sys=fsserve dom=fsserve.localgrid/g' > /lib/ndb/local2
-mv /lib/ndb/local2 /lib/ndb/local
-
-#cat /lib/ndb/local | sed 's/ip=192.168.9.3/ip=192.168.9.3 ip=fdfc::5054:ff:fe00:ee03/g' > /lib/ndb/local2
-#mv /lib/ndb/local2 /lib/ndb/local
-
 # Set up base networking
-echo 'auth=192.168.9.4 authdom=localgrid
+echo 'database=
+   file=/net/ndb
+   file=/lib/ndb/local
+   file=/lib/ndb/common
 
-ipnet=localgrid ip=192.168.9.0 ipmask=255.255.255.0
+dom=
+   ns=A.ROOT-SERVERS.NET
+   ns=B.ROOT-SERVERS.NET
+   ns=C.ROOT-SERVERS.NET
+   ns=D.ROOT-SERVERS.NET
+   ns=E.ROOT-SERVERS.NET
+   ns=F.ROOT-SERVERS.NET
+   ns=G.ROOT-SERVERS.NET
+   ns=H.ROOT-SERVERS.NET
+   ns=I.ROOT-SERVERS.NET
+   ns=J.ROOT-SERVERS.NET
+   ns=K.ROOT-SERVERS.NET
+   ns=L.ROOT-SERVERS.NET
+   ns=M.ROOT-SERVERS.NET
+
+ip=127.0.0.1 sys=localhost dom=localhost
+
+## For DHCP Client
+#sys=fsserve dom=fsserve.localgrid ether=52540000ee03
+
+ipnet=localgrid ip=192.168.9.0 ipmask=255.255.255.0 ipmask=/64
    auth=authserve
+   authdom=localgrid
    dnsdom=localgrid
    cpu=cpuserve
    fs=fsserve
    ipgw=192.168.9.1
-   ipgw=fdfc::1
    dns=192.168.9.1
+   ipgw=fdfc::1
 
-#sys=fsserve dom=fsserve.localgrid ether=52540000ee03 ip=192.168.9.3 ip=fdfc::5054:ff:fe00:ee03
+sys=fsserve dom=fsserve.localgrid ether=52540000ee03 ip=192.168.9.3
+   ipmask=255.255.255.0 ipgw=192.168.9.1 dns=192.168.9.1
+   ip=fdfc::5054:ff:fe00:ee03 ip=fdfc::5054:ff:fe00:ee03 ipmask=/64 ipgw=fdfc::1
 
-#sys=authserve dom=authserve.localgrid ether=52540000ee04 ip=192.168.9.4 ip=fdfc::5054:ff:fe00:ee04
-#   bootf=/386/9bootpxe
+sys=authserve dom=authserve.localgrid ether=52540000ee04 ip=192.168.9.4 ip=fdfc::5054:ff:fe00:ee04
+   bootf=/386/9bootpxe
 
-#sys=cpuserve dom=cpuserve.localgrid ether=52540000ee05 ip=192.168.9.5 ip=fdfc::5054:ff:fe00:ee05
-#   bootf=/386/9bootpxe
+sys=cpuserve dom=cpuserve.localgrid ether=52540000ee05 ip=192.168.9.5 ip=fdfc::5054:ff:fe00:ee05
+   bootf=/386/9bootpxe
 
-#sys=termserve dom=termserve.localgrid ether=52540000ee06 ip=192.168.9.6 ip=fdfc::5054:ff:fe00:ee06
-#   bootf=/386/9bootpxe
-' >> /lib/ndb/local
+sys=termserve dom=termserve.localgrid ether=52540000ee06 ip=192.168.9.6 ip=fdfc::5054:ff:fe00:ee06
+   bootf=/386/9bootpxe
+' > /lib/ndb/local
 
 # Reload network config
 ip/ipconfig
@@ -45,8 +64,8 @@ echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/cpuserve/cpurc
 echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/termserve/termrc
 
 # PXE
-echo '#ip/dhcpd
-#ip/dhcp6d
+echo 'ip/dhcpd
+ip/dhcp6d
 ip/tftpd' >> /cfg/fsserve/cpurc
 
 # PXE - Default
@@ -72,4 +91,3 @@ nvram=/dev/sd00/nvram
 console=0' > /cfg/pxe/52540000ee04
 grep bootfile /cfg/plan9.ini >> /cfg/pxe/52540000ee04
 cp /cfg/pxe/52540000ee04 /cfg/pxe/52540000ee05
-

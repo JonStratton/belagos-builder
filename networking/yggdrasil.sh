@@ -82,8 +82,8 @@ elif [ $1 -a $1 = 'inbound' ]; then
    inbound
 elif [ $1 -a $1 = 'uninstall' ]; then
    uninstall
-elif [ $1 ]; then
-   echo "$0 install|uninstall|inbound|outbound"
-else
+elif [ $1 -a $1 = 'install' ]; then
    install
+else
+   echo "$0 install|uninstall|inbound|outbound"
 fi
