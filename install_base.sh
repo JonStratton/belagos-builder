@@ -44,26 +44,6 @@ sudo ip link set dev tap0 down
 sudo ip addr add 192.168.9.1/24 dev tap0
 sudo ip addr add fdfc::1/64 dev tap0
 sudo ip link set dev tap0 up
-
-# Create dnsmasq config for tap0 with some hard coded MACs to IP
-sudo sh -c '( echo "interface=tap0
-domain=localgrid
-local=/localgrid/
-expand-hosts
-dhcp-option=3,192.168.9.1
-dhcp-range=192.168.9.100,192.168.9.200,255.255.255.0,24h
-dhcp-boot=386/9bootpxe,fsserve,192.168.9.3
-dhcp-host=52:54:00:00:EE:03,fsserve,192.168.9.3
-dhcp-host=52:54:00:00:EE:04,authserve,192.168.9.4
-dhcp-host=52:54:00:00:EE:05,cpuserve,192.168.9.5
-dhcp-host=52:54:00:00:EE:06,cpuserve,192.168.9.6
-address=/host.localgrid/192.168.9.1
-address=/fsserve.localgrid/192.168.9.3
-address=/authserve.localgrid/192.168.9.4
-address=/cpuserve.localgrid/192.168.9.5
-address=/termserve.localgrid/192.168.9.6" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
-sudo systemctl enable dnsmasq
-sudo systemctl restart dnsmasq
 }
 
 #############
@@ -76,6 +56,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y `cat ./install_bas
 rm ./new_packages.txt
 sudo apt-get autoremove -y
 sudo apt-get clean -y
+sudo rm /etc/network/interfaces.d/tap0.iface
 }
 
 ########
