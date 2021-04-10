@@ -18,8 +18,8 @@ sudo ln -s `pwd`/drawterm /usr/local/bin/drawterm
 #############
 uninstall()
 {
-rm /usr/local/bin/drawterm
-rm -rf /opt/drawterm-*
+sudo rm /usr/local/bin/drawterm
+sudo rm -rf /opt/drawterm-*
 }
 
 ########
