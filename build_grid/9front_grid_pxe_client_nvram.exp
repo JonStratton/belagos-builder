@@ -1,0 +1,48 @@
+#!/usr/bin/expect -f
+# https://9p.io/wiki/plan9/Vmware_playground_for_plan9/index.html
+
+set glenda_pass ''
+if {[info exists ::env(GLENDA_PASS)]} {
+   set glenda_pass $::env(GLENDA_PASS)
+}
+
+set runner [lindex $argv 0]
+
+set timeout -1
+spawn $runner -nographic
+expect "authid:"
+send "glenda\r"
+expect "authdom:"
+send "localgrid\r"
+expect "secstore key:"
+send "$glenda_pass\r"
+expect "password:"
+send "$glenda_pass\r"
+
+# Auth server reprompts for password, cpu server doesnt. Dont know how to do a simple if statement in expect... dont care
+expect {
+   "Password:" {
+      send "$glenda_pass\r"
+      expect "Confirm password:"
+      send "$glenda_pass\r"
+   }
+   "# " { send "\r" }
+}
+
+# nvram
+expect "# "
+send "belagos_install/small_nvram.rc\r"
+
+expect "# "
+send "auth/wrkey\r"
+expect "authid:"
+send "glenda\r"
+expect "authdom:"
+send "localgrid\r"
+expect "secstore key:"
+send "$glenda_pass\r"
+expect "password:"
+send "$glenda_pass\r"
+expect "# "
+send "fshalt\r"
+expect eof

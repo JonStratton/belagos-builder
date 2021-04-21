@@ -1,6 +1,6 @@
 #!/bin/sh
 
-max_counter=40
+max_counter=60
 sleep='sleep 5'
 
 counter=0

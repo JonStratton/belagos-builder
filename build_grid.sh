@@ -16,6 +16,13 @@ if [ $arch = 'x86_64' ]; then
 fi
 local_iso="9front.$iso_arch.iso"
 
+# grid, solo/cpu, auth, fs
+type='grid'
+if [ $1 ]
+then
+   type=$1
+fi
+
 [ ! -d img ] && mkdir img
 [ ! -d bin ] && mkdir bin
 
@@ -42,20 +49,27 @@ if [ ! $free_disk ]; then
 fi
 free_mb=`expr $free_disk / 1024`
 fsserve_disk_gb_default=`expr \( \( $free_mb \* 75 \) / 100 \) / 1024`G
-
 # Warn on RAM and Disk.
-[ $core_free_mb -lt 704 ] && echo "Warning, you seem to have less RAM than can run your base OS plus 3 VMs"
 [ $free_mb -lt 10240 ] && echo "Warning, you seem to have less than 10G free. Installer may not work(???)."
 
 # Prompt for values
-read -p "RAM in MB for fsserve(default $fsserve_core_default): " fsserve_core
-[ -z $fsserve_core ] && fsserve_core=$fsserve_core_default
-read -p "RAM in MB for cpuserve(default $cpuserve_core_default): " cpuserve_core
-[ -z $cpuserve_core ] && cpuserve_core=$cpuserve_core_default
-read -p "RAM in MB for authserve(default $authserve_core_default): " authserve_core
-[ -z $authserve_core ] && authserve_core=$authserve_core_default
-read -p "Disk for fsserve(default $fsserve_disk_gb_default): " fsserve_disk_gb
-[ -z $fsserve_disk_gb ] && fsserve_disk_gb=$fsserve_disk_gb_default
+if [ $type = 'grid' ]; then
+   [ $core_free_mb -lt 704 ] && echo "Warning, you seem to have less RAM than can run your base OS plus 3 VMs"
+
+   read -p "RAM in MB for fsserve(default $fsserve_core_default): " fsserve_core
+   [ -z $fsserve_core ] && fsserve_core=$fsserve_core_default
+   read -p "RAM in MB for cpuserve(default $cpuserve_core_default): " cpuserve_core
+   [ -z $cpuserve_core ] && cpuserve_core=$cpuserve_core_default
+   read -p "RAM in MB for authserve(default $authserve_core_default): " authserve_core
+   [ -z $authserve_core ] && authserve_core=$authserve_core_default
+   read -p "Disk for fsserve(default $fsserve_disk_gb_default): " fsserve_disk_gb
+   [ -z $fsserve_disk_gb ] && fsserve_disk_gb=$fsserve_disk_gb_default
+else
+   read -p "RAM in MB for install(default $cpuserve_core_default): " solo_core
+   [ -z $solo_core ] && solo_core=$cpuserve_core_default
+   read -p "Disk for install(default $fsserve_disk_gb_default): " solo_disk_gb
+   [ -z $solo_disk_gb ] && solo_disk_gb=$fsserve_disk_gb_default
+fi
 
 ############
 # Password #
@@ -115,37 +129,83 @@ if [ ! -f img/9front_base.img ]; then
    rmdir iso_mount
 fi
 
+#############
+# SOLOSERVE #
+#############
+
+if [ $type = 'solo' ]; then
+   echo "qemu-system-$qemu_arch $kvm -smp 4 -m $solo_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_solo.img -device scsi-hd,drive=vd0 \$*" > bin/solo_run.sh
+   chmod u+x bin/solo_run.sh
+
+   if [ ! -f img/9front_fsserve.img ]; then
+      cp img/9front_base.img img/9front_solo.img
+
+      build_grid/9front_base_cpuserve.exp bin/solo_run.sh
+   fi
+fi
+
 ###########
 # FSSERVE #
 ###########
 
-echo "qemu-system-$qemu_arch $kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 \$*" > bin/fsserve_run.sh
-chmod u+x bin/fsserve_run.sh
+if [ $type = 'grid' ]; then
+   echo "qemu-system-$qemu_arch $kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 \$*" > bin/fsserve_run.sh
+   chmod u+x bin/fsserve_run.sh
 
-bin/fsserve_dependancy.sh -d
+   if [ ! -f img/9front_fsserve.img ]; then
+      cp img/9front_base.img img/9front_fsserve.img
+
+      # Set up networking and turn on PXE
+      build_grid/9front_base_cpuserve.exp bin/fsserve_run.sh
+      build_grid/9front_fsserve_fscache.exp bin/fsserve_run.sh
+      build_grid/9front_grid_pxe_server.exp bin/fsserve_run.sh
+      #build_grid/9front_fsserve.exp bin/fsserve_run.sh
+   fi
+
+   bin/fsserve_dependancy.sh -d
+fi
 
 #############
 # AUTHSERVE #
 #############
 
-echo "qemu-system-$qemu_arch $kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/authserve_run.sh
-chmod u+x bin/authserve_run.sh
+if [ $type = 'grid' ]; then
+   echo "qemu-system-$qemu_arch $kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/authserve_run.sh
+   chmod u+x bin/authserve_run.sh
 
-bin/authserve_dependancy.sh -d
+   if [ ! -f img/9front_authserve.img ]; then
+      bin/boot_wait.sh 192.168.9.3:564
+
+      qemu-img create -f qcow2 img/9front_authserve.img 1M
+      build_grid/9front_grid_pxe_client_nvram.exp bin/authserve_run.sh
+      build_grid/9front_authserver_changeuser.exp bin/authserve_run.sh
+      #build_grid/9front_authserve.exp bin/authserve_run.sh
+   fi
+
+   bin/authserve_dependancy.sh -d
+fi
 
 ############
 # CPUSERVE #
 ############
 
-echo "qemu-system-$qemu_arch $kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/cpuserve_run.sh
-chmod u+x bin/cpuserve_run.sh
+if [ $type = 'grid' ]; then
+   echo "qemu-system-$qemu_arch $kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n \$*" > bin/cpuserve_run.sh
+   chmod u+x bin/cpuserve_run.sh
 
-bin/cpuserve_dependancy.sh -d
+   if [ ! -f img/9front_cpuserve.img ]; then
+      bin/boot_wait.sh 192.168.9.3:564 192.168.9.4:567
+
+      qemu-img create -f qcow2 img/9front_cpuserve.img 1M
+      build_grid/9front_grid_pxe_client_nvram.exp bin/cpuserve_run.sh
+      #build_grid/9front_cpuserve.exp bin/cpuserve_run.sh
+   fi
+fi
 
 ########################
 # Turn down everything #
 ########################
 
-echo "qemu-system-$qemu_arch $kvm -m 64 -net nic,macaddr=52:54:00:00:EE:06 -net vde,sock=/var/run/vde2/tap0.ctl -boot n \$*" > bin/termserve_run.sh
-chmod u+x bin/termserve_run.sh
-pkill qemu
+if [ $type = 'grid' ]; then
+   pkill qemu
+fi

@@ -8,12 +8,6 @@ if [ $wait_code -ne 0 ]; then
    exit $wait_code
 fi
 
-# 2. Check image. If Missing,  do install.
-if [ ! -f img/9front_authserve.img ]; then
-   qemu-img create -f qcow2 img/9front_authserve.img 1M
-   build_grid/9front_authserve.exp bin/authserve_run.sh
-fi
-
 # 3. Run with no hup
 if [ $1 = '-d' ]; then
    nohup bin/authserve_run.sh -nographic &
