@@ -85,7 +85,7 @@ fi
 
 if [ ! $USER_PASS ]; then
    default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
-   read -p "Enter password for user(default $default): " USER_PASS
+   read -p "Enter password for $USER(default $default): " USER_PASS
    [ -z $USER_PASS ] && USER_PASS=$default
    export USER_PASS
 fi
@@ -133,13 +133,14 @@ fi
 # SOLOSERVE #
 #############
 
-if [ $type = 'solo' ]; then
+if [ $type != 'grid' ]; then
    echo "qemu-system-$qemu_arch $kvm -smp 4 -m $solo_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_solo.img -device scsi-hd,drive=vd0 \$*" > bin/solo_run.sh
    chmod u+x bin/solo_run.sh
 
-   if [ ! -f img/9front_fsserve.img ]; then
+   if [ ! -f img/9front_solo.img ]; then
       cp img/9front_base.img img/9front_solo.img
 
+      # All Solo servers are CPU servers.
       build_grid/9front_base_cpuserve.exp bin/solo_run.sh
    fi
 fi
@@ -159,7 +160,6 @@ if [ $type = 'grid' ]; then
       build_grid/9front_base_cpuserve.exp bin/fsserve_run.sh
       build_grid/9front_fsserve_fscache.exp bin/fsserve_run.sh
       build_grid/9front_grid_pxe_server.exp bin/fsserve_run.sh
-      #build_grid/9front_fsserve.exp bin/fsserve_run.sh
    fi
 
    bin/fsserve_dependancy.sh -d
@@ -179,7 +179,6 @@ if [ $type = 'grid' ]; then
       qemu-img create -f qcow2 img/9front_authserve.img 1M
       build_grid/9front_grid_pxe_client_nvram.exp bin/authserve_run.sh
       build_grid/9front_authserver_changeuser.exp bin/authserve_run.sh
-      #build_grid/9front_authserve.exp bin/authserve_run.sh
    fi
 
    bin/authserve_dependancy.sh -d
@@ -198,7 +197,6 @@ if [ $type = 'grid' ]; then
 
       qemu-img create -f qcow2 img/9front_cpuserve.img 1M
       build_grid/9front_grid_pxe_client_nvram.exp bin/cpuserve_run.sh
-      #build_grid/9front_cpuserve.exp bin/cpuserve_run.sh
    fi
 fi
 

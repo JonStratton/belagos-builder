@@ -42,14 +42,23 @@ This will:
 1. Boots the cpuserve from the fsserve via PXE and creates nvram.
 1. Shuts everything down.
 
-Optionally, you can also plug your grid into a Yggdrasil with one of the darknet(IPv6 overlay mesh network) scripts.
+If you just one vm (to use in a larger darknet grid!), run the above script with the server type as an argument.
 
-	./install_yggdrasil.sh
+	newgrp vde2-net
+	./build_grid.sh cpu
+
+Optionally, you can also plug your vm network into TOR or Yggdrasil with one of the darknet(IPv6 overlay mesh network) scripts.
+
+	networking/tor.sh install
+	networking/tor.sh outbound
 
 This will:
-1. Install Yggdrasil software. 
-1. Create IPv6 iptables rules to forward IPv6 connections between out vde2 network and the darknet.
-If you want allow connections from Yggdrasil, look at the script for the commented ip6tables commands.
+1. Install TOR software.
+1. Route all outbound traffic threw TOR.
+
+If you are really cool, you can expose your inbound connections to TOR or Yggdrasil with the following:
+
+	networking/tor.sh inbound
 
 If you want, you can now test by running the FSServe alone in a terminal:
 
