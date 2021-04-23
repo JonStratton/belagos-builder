@@ -1,0 +1,21 @@
+#!/usr/bin/expect -f
+# https://nicolasmontanaro.com/blog/9front-guide/
+
+set runner [lindex $argv 0]
+
+# Turn on auth
+set timeout -1
+spawn $runner -nographic
+expect "bootargs is *\] "
+send "local!/dev/sd00/fscache -c\r"
+expect "config:*"
+send "noauth\r"
+expect "config:*"
+send "noauth\r"
+expect "config:*"
+send "end\r"
+expect "# "
+send "9fs 9fat; echo 'nobootprompt=local!/dev/sd00/fscache -a tcp!*!564' >>/n/9fat/plan9.ini\r"
+expect "# "
+send "fshalt\r"
+expect eof
