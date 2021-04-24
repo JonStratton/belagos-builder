@@ -15,57 +15,54 @@ fi
 # Copy / Move stuff over.
 sudo mkdir /home/glenda/bin/
 sudo cp bin/* /home/glenda/bin/
-sudo chown -R glenda:glenda /home/glenda/bin/
 sudo mkdir /home/glenda/img/
-sudo mv img/*serve.img /home/glenda/img/
-sudo chown -R glenda:glenda /home/glenda/img/
+sudo chown -R glenda:glenda /home/glenda/bin/
 
-# Install fsserve service
-sudo sh -c '( echo "[Unit]
-Description=Belagos fsserve Service
+# Install solo service
+if [ -f img/9front_solo.img ]; then
+   sudo mv img/9front_solo.img /home/glenda/img/
+   sudo chown -R glenda:glenda /home/glenda/img/
+   sudo sh -c '( echo "[Unit]
+Description=Belagos Solo Service
 After=network.target
 [Service]
-Type=simple
+Type=forking
+TimeoutStartSec=600
 User=glenda
 WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/fsserve_dependancy.sh
-Restart=on-failure
+ExecStart=/home/glenda/bin/boot_wait.sh bin/solo_run.sh
 [Install]
-WantedBy=multi-user.target" > /etc/systemd/system/belagos_fsserve.service )'
+WantedBy=multi-user.target" > /etc/systemd/system/belagos_solo.service )'
 
-# Install authserve service
-sudo sh -c '( echo "[Unit]
-Description=Belagos authserve Service
-After=network.target belagos_fsserve.service
+   sudo systemctl daemon-reload
+   sudo systemctl enable belagos_solo.service
+   sudo systemctl start belagos_solo.service
+fi
+
+# Install fsserve service
+if [ -f img/9front_fsserve.img ]; then
+   sudo mv img/9front_fsserve.img /home/glenda/img/
+   sudo mv img/9front_authserve.img /home/glenda/img/
+   sudo mv img/9front_cpuserve.img /home/glenda/img/
+   sudo chown -R glenda:glenda /home/glenda/img/
+   sudo sh -c '( echo "[Unit]
+Description=Belagos Grid Service
+After=network.target
 [Service]
-Type=simple
+Type=forking
+TimeoutStartSec=600
 User=glenda
 WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/authserve_dependancy.sh
-Restart=on-failure
+ExecStart=/home/glenda/bin/boot_wait.sh bin/fsserve_run.sh bin/authserve_run.sh bin/cpuserve_run.sh
 [Install]
-WantedBy=multi-user.target" > /etc/systemd/system/belagos_authserve.service )'
+WantedBy=multi-user.target" > /etc/systemd/system/belagos_grid.service )'
 
-# Install cpuserve service
-sudo sh -c '( echo "[Unit]
-Description=Belagos cpuserve Service
-After=network.target belagos_fsserve.service belagos_authserve.service
-[Service]
-Type=simple
-User=glenda
-WorkingDirectory=/home/glenda
-ExecStart=/home/glenda/bin/cpuserve_dependancy.sh
-Restart=on-failure
-[Install]
-WantedBy=multi-user.target" > /etc/systemd/system/belagos_cpuserve.service )'
+   sudo systemctl daemon-reload
+   sudo systemctl enable belagos_grid.service
+   sudo systemctl start belagos_grid.service
+fi
 
-sudo systemctl daemon-reload
-sudo systemctl enable belagos_fsserve.service
-sudo systemctl enable belagos_authserve.service
-sudo systemctl enable belagos_cpuserve.service
-sudo systemctl start belagos_fsserve.service
-sudo systemctl start belagos_authserve.service
-sudo systemctl start belagos_cpuserve.service
+
 }
 
 #############
@@ -74,15 +71,12 @@ sudo systemctl start belagos_cpuserve.service
 uninstall()
 {
 # Stop Service and uninstall
-sudo systemctl stop belagos_fsserve.service
-sudo systemctl stop belagos_authserve.service
-sudo systemctl stop belagos_cpuserve.service
-sudo systemctl disable belagos_fsserve.service
-sudo systemctl disable belagos_authserve.service
-sudo systemctl disable belagos_cpuserve.service
-sudo rm /etc/systemd/system/belagos_fsserve.service
-sudo rm /etc/systemd/system/belagos_authserve.service
-sudo rm /etc/systemd/system/belagos_cpuserve.service
+sudo systemctl stop belagos_grid.service
+sudo systemctl stop belagos_solo.service
+sudo systemctl disable belagos_grid.service
+sudo systemctl disable belagos_solo.service
+sudo rm /etc/systemd/system/belagos_grid.service
+sudo rm /etc/systemd/system/belagos_solo.service
 
 sudo rm -rf /home/glenda/bin/
 sudo rm -rf /home/glenda/img/

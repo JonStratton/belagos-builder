@@ -1,5 +1,4 @@
 #!/usr/bin/expect -f
-# https://nicolasmontanaro.com/blog/9front-guide/
 
 set glenda_pass 'changeme'
 if {[info exists ::env(GLENDA_PASS)]} {
@@ -15,7 +14,7 @@ set runner [lindex $argv 0]
 
 # Run final installer
 set timeout -1
-spawn $runner -nographic
+spawn $runner
 
 if { $user_pass ne "" } {
    set user $::env(USER)

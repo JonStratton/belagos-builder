@@ -1,11 +1,10 @@
 #!/usr/bin/expect -f
-# https://nicolasmontanaro.com/blog/9front-guide/
 
 set runner [lindex $argv 0]
 
 # Turn on auth
 set timeout -1
-spawn $runner -nographic
+spawn $runner
 expect "bootargs is *\] "
 send "local!/dev/sd00/fscache -c\r"
 expect "config:*"

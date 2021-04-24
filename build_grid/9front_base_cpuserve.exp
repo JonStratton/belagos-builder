@@ -1,5 +1,4 @@
 #!/usr/bin/expect -f
-# https://nicolasmontanaro.com/blog/9front-guide/
 
 set glenda_pass 'changeme'
 if {[info exists ::env(GLENDA_PASS)]} {
@@ -10,7 +9,7 @@ set runner [lindex $argv 0]
 
 # Turn on CPU Server
 set timeout -1
-spawn $runner -nographic
+spawn $runner
 expect "boot*\] "
 send "\r"
 expect "user*:*"
@@ -22,7 +21,7 @@ send "fshalt\r"
 expect eof
 
 # Create user?
-spawn $runner -nographic
+spawn $runner
 expect "boot*\] "
 send "\r"
 expect "authid:*"

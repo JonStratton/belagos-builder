@@ -79,3 +79,9 @@ You should now be able to connect to the grid with the terminal VM:
 If it was plugged into Yggdrasil, and the needed ports were exposed; you can connect via drawterm:
 
 	/opt/drawterm/drawterm -h 200:aaaa:bbbb:cccc:dddd:eeee:ffff:1111
+
+##Useful links
+
+[Expanding your Grid](https://9p.io/wiki/plan9/Expanding_your_Grid/index.html)
+[Nicolas S. Montanaro - 9front guild](https://nicolasmontanaro.com/blog/9front-guide/)
+
