@@ -1,5 +1,4 @@
 #!/usr/bin/expect -f
-# https://9p.io/wiki/plan9/Vmware_playground_for_plan9/index.html
 
 set glenda_pass ""
 if {[info exists ::env(GLENDA_PASS)]} {
@@ -16,7 +15,7 @@ set runner [lindex $argv 0]
 set timeout -1
 
 # Create Users
-spawn $runner -nographic
+spawn $runner
 expect "# "
 send "auth/changeuser glenda\r"
 expect "Password:"

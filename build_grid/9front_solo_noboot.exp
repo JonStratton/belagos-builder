@@ -1,0 +1,14 @@
+#!/usr/bin/expect -f
+
+set runner [lindex $argv 0]
+
+# Turn on auth
+set timeout -1
+spawn $runner
+expect "bootargs is *\] "
+send "\r"
+expect "# "
+send "9fs 9fat; echo 'nobootprompt=local!/dev/sd00/fscache' >>/n/9fat/plan9.ini\r"
+expect "# "
+send "fshalt\r"
+expect eof
