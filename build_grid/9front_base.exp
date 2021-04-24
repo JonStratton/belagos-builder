@@ -7,7 +7,7 @@ set iso [lindex $argv 1]
 set timeout -1
 
 # Install base system. Use "-net user" so we can do this before rebooting
-spawn $runner -drive if=none,id=vd1,file=$iso -device scsi-cd,drive=vd1, -kernel iso_mount/*/9pc* -initrd plan9.ini -no-reboot -nographic
+spawn $runner -drive if=none,id=vd1,file=$iso -device scsi-cd,drive=vd1, -kernel iso_mount/*/9pc* -initrd plan9.ini -no-reboot
 expect "bootargs is *"
 sleep 5
 send "\r"
