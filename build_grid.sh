@@ -76,6 +76,16 @@ fi
 ############
    # Use Glenda's password for the install
 
+# Disk encryption on solo server (for now)
+if [ $type != 'grid' ]; then
+   if [ ! $DISK_PASS ]; then
+      default=""
+      read -p "Enter optional disk encryption password. If entered, this password will be required to boot: " DISK_PASS
+      [ -z $DISK_PASS ] && DISK_PASS=$default
+      export DISK_PASS
+   fi
+fi
+
 if [ ! $GLENDA_PASS ]; then
    default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
    read -p "Enter password for glenda(default $default): " GLENDA_PASS
@@ -112,9 +122,9 @@ chmod u+x bin/base_run.sh
 # Run base installer directly
 if [ ! -f img/9front_base.img ]; then
    # Pull the kern and init out, so we can boot in console mode
-   mkdir iso_mount
-   sudo mount -t iso9660 -o loop $local_iso iso_mount
-   cp iso_mount/cfg/plan9.ini .
+   7z e $local_iso cfg/plan9.ini -aoa
+   7z e $local_iso $iso_arch/9pc* -aoa
+
    chmod 644 ./plan9.ini
    echo "console=0\n*acpi=1" >> ./plan9.ini
 
@@ -122,8 +132,7 @@ if [ ! -f img/9front_base.img ]; then
    build_grid/9front_base.exp bin/base_run.sh $local_iso
 
    rm ./plan9.ini
-   sudo umount iso_mount
-   rmdir iso_mount
+   rm ./9pc*
 fi
 
 #############
@@ -139,7 +148,11 @@ if [ $type != 'grid' ]; then
 
       # All Solo servers are CPU servers.
       build_grid/9front_base_cpuserve.exp bin/solo_run.sh
-      build_grid/9front_solo_noboot.exp bin/solo_run.sh
+
+      # Dont bother noboot stopping an encrypted install
+      if [ ! $DISK_PASS ]; then
+         build_grid/9front_solo_noboot.exp bin/solo_run.sh
+      fi
    fi
 fi
 

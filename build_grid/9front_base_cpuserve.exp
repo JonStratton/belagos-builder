@@ -1,5 +1,10 @@
 #!/usr/bin/expect -f
 
+set disk_pass ""
+if {[info exists ::env(DISK_PASS)]} {
+   set disk_pass $::env(DISK_PASS)
+}
+
 set glenda_pass 'changeme'
 if {[info exists ::env(GLENDA_PASS)]} {
    set glenda_pass $::env(GLENDA_PASS)
@@ -10,6 +15,16 @@ set runner [lindex $argv 0]
 # Turn on CPU Server
 set timeout -1
 spawn $runner
+if { $disk_pass ne "" } {
+   expect "boot*\] "
+   send "!rc\r"
+   expect "% "
+   send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+   expect "Password: "
+   send "$disk_pass\r"
+   expect "% "
+   send "exit\r"
+}
 expect "boot*\] "
 send "\r"
 expect "user*:*"
@@ -22,6 +37,16 @@ expect eof
 
 # Create user?
 spawn $runner
+if { $disk_pass ne "" } {
+   expect "boot*\] "
+   send "!rc\r"
+   expect "% "
+   send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+   expect "Password: "
+   send "$disk_pass\r"
+   expect "% "
+   send "exit\r"
+}
 expect "boot*\] "
 send "\r"
 expect "authid:*"
