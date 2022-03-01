@@ -1,0 +1,101 @@
+#!/usr/bin/expect -f
+
+set disk_pass ""
+
+# Open input and output pipes
+set in_pipe "/tmp/belagos_in"
+set out_pipe "/tmp/belagos_out"
+
+if { [file exists $in_pipe] == 1} {
+   exec rm $in_pipe
+}
+if { [file exists $out_pipe] == 1} {
+   exec rm $out_pipe
+}
+
+exec mkfifo -m 620 $in_pipe
+exec mkfifo -m 640 $out_pipe
+
+proc password_pipe {} {
+   global in_pipe
+   set fp [open $in_pipe r]
+   set password_in [string trim [read $fp] ]
+   close $fp
+   return $password_in
+}
+
+proc status_pipe {} {
+   global out_pipe
+   global status
+   set fp [open $out_pipe w]
+   foreach i [array names status] {
+      puts $fp "status($i): $status($i)"
+   }
+   close $fp
+}
+
+proc exit_pipe {} {
+   global spawn_ids
+   foreach i [array names spawn_ids] {
+      set spawn_id $spawn_ids($i)
+      send "\r"
+      expect "# "
+      send "fshalt\r"
+      expect eof
+   }
+}
+
+foreach runner $argv {
+   set timeout -1
+   spawn $runner
+   set spawn_ids($runner) $spawn_id
+   expect { 
+      # /dev/fs, in this case, means encryption
+      "bootargs is */dev/fs/fscache\]*" {
+         send "!rc\r"
+         expect "% "
+         send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+         expect "Password: "
+
+         if { $disk_pass eq "" } {
+            puts "(Waiting on user input on /tmp/belagos_disk_password to continue)"
+            set disk_pass [password_pipe]
+         }
+
+         send "$disk_pass\r"
+         expect "% "
+         send "exit\r"
+         expect "bootargs is */dev/fs/fscache\]*"
+         send "\r"
+      }
+      # Boot normally
+      "bootargs is */dev/sd00/fscache\]*" {
+         send "\r"
+      }
+      # Boots to prompt
+      "# *" {
+         send "\r"
+      }
+   }
+
+   expect "# "
+   set status($runner) "on"
+}
+
+# Wait for commands from pipe
+while {1} {
+   set fp [open $in_pipe r]
+   set pipe_command [string trim [read $fp] ]
+   close $fp
+
+   if { $pipe_command == "exit" } {
+      exit_pipe
+      break
+
+   } else {
+      status_pipe
+   }
+}
+
+exec rm $in_pipe
+exec rm $out_pipe

@@ -148,11 +148,6 @@ if [ $type != 'grid' ]; then
 
       # All Solo servers are CPU servers.
       build_grid/9front_base_cpuserve.exp bin/solo_run.sh
-
-      # Dont bother noboot stopping an encrypted install
-      if [ ! $DISK_PASS ]; then
-         build_grid/9front_solo_noboot.exp bin/solo_run.sh
-      fi
    fi
 fi
 
