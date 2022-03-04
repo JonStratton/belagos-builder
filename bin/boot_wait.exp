@@ -5,37 +5,56 @@ set disk_pass ""
 # Open input and output pipes
 set in_pipe "/tmp/belagos_in"
 set out_pipe "/tmp/belagos_out"
-
 if { [file exists $in_pipe] == 1} {
    exec rm $in_pipe
 }
 if { [file exists $out_pipe] == 1} {
    exec rm $out_pipe
 }
-
 exec mkfifo -m 620 $in_pipe
 exec mkfifo -m 640 $out_pipe
 
-proc password_pipe {} {
+proc read_pipe {} {
    global in_pipe
    set fp [open $in_pipe r]
-   set password_in [string trim [read $fp] ]
+   set in_line [string trim [read $fp] ]
    close $fp
-   return $password_in
+   return $in_line
+}
+
+proc write_pipe {out_line} {
+   global out_pipe
+   set fp [open $out_pipe w]
+   puts $fp $out_line
+   close $fp
+}
+
+proc menu {} {
+   global disk_pass
+   set pipe_command [read_pipe]
+
+   if { $pipe_command == "halt" } {
+      exit_pipe
+   } elseif { $pipe_command == "password" } {
+      set disk_pass [read_pipe]
+   } elseif { $pipe_command == "status" } {
+      status_pipe
+   } else {
+      write_pipe "status|password|halt|help"
+   }
 }
 
 proc status_pipe {} {
-   global out_pipe
    global status
-   set fp [open $out_pipe w]
    foreach i [array names status] {
-      puts $fp "status($i): $status($i)"
+      write_pipe "status($i): $status($i)"
    }
-   close $fp
 }
 
 proc exit_pipe {} {
    global spawn_ids
+   global in_pipe
+   global out_pipe
    foreach i [array names spawn_ids] {
       set spawn_id $spawn_ids($i)
       send "\r"
@@ -43,6 +62,9 @@ proc exit_pipe {} {
       send "fshalt\r"
       expect eof
    }
+   exec rm $in_pipe
+   exec rm $out_pipe
+   exit 0
 }
 
 foreach runner $argv {
@@ -57,10 +79,11 @@ foreach runner $argv {
          send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
          expect "Password: "
 
-         if { $disk_pass eq "" } {
-            puts "(Waiting on user input on /tmp/belagos_disk_password to continue)"
-            set disk_pass [password_pipe]
+         set status($runner) "Waiting on Disk Password"
+         while { $disk_pass eq "" } {
+            menu
          }
+         # TODO, handle bad passwords
 
          send "$disk_pass\r"
          expect "% "
@@ -84,18 +107,5 @@ foreach runner $argv {
 
 # Wait for commands from pipe
 while {1} {
-   set fp [open $in_pipe r]
-   set pipe_command [string trim [read $fp] ]
-   close $fp
-
-   if { $pipe_command == "exit" } {
-      exit_pipe
-      break
-
-   } else {
-      status_pipe
-   }
+   menu
 }
-
-exec rm $in_pipe
-exec rm $out_pipe
