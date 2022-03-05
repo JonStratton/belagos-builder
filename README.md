@@ -68,9 +68,9 @@ If it looks good, you can now install it on the built grid onto the system:
 
 	./install_build.sh
 
-1. Create a new “glenda” user.
-1. Copy the images and runners into glenda’s home directory.
-1. Create service files than run the Vms on boot (as glenda).
+1. Create a new “belagos” user.
+1. Copy the images and runners into /opt/belagos.
+1. Create service files than run the Vms on boot (as belagos).
 
 You should now be able to connect to the grid with the terminal VM:
 

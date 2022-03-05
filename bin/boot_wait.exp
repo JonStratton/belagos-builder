@@ -3,16 +3,9 @@
 set disk_pass ""
 
 # Open input and output pipes
-set in_pipe "/tmp/belagos_in"
-set out_pipe "/tmp/belagos_out"
-if { [file exists $in_pipe] == 1} {
-   exec rm $in_pipe
-}
-if { [file exists $out_pipe] == 1} {
-   exec rm $out_pipe
-}
-exec mkfifo -m 620 $in_pipe
-exec mkfifo -m 640 $out_pipe
+set script_loc [exec dirname $argv0]
+set in_pipe "$script_loc/../img/belagos_in"
+set out_pipe "$script_loc/../img/belagos_out"
 
 proc read_pipe {} {
    global in_pipe

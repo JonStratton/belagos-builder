@@ -94,8 +94,8 @@ if [ ! $GLENDA_PASS ]; then
 fi
 
 if [ ! $USER_PASS ]; then
-   default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
-   read -p "Enter password for $USER(default $default): " USER_PASS
+   default=""
+   read -p "Enter password for $USER to create user: " USER_PASS
    [ -z $USER_PASS ] && USER_PASS=$default
    export USER_PASS
 fi
@@ -111,13 +111,21 @@ if [ ! -f $local_iso ]; then
    gunzip $local_iso.gz
 fi
 
+###############
+# Named Pipes #
+###############
+	# This is our lazy IPC for belagos_client.sh to send disk passwords to boot_wait.exp
+
+mkfifo -m 622 img/belagos_in
+mkfifo -m 644 img/belagos_out
+
 ################
 # Base Install #
 ################
    # This will be converted to our fsserve
 
 echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_base.img -device scsi-hd,drive=vd0 -nographic \$*" > bin/base_run.sh
-chmod u+x bin/base_run.sh
+chmod a+x bin/base_run.sh
 
 # Run base installer directly
 if [ ! -f img/9front_base.img ]; then
@@ -141,7 +149,7 @@ fi
 
 if [ $type != 'grid' ]; then
    echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -smp 2 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_solo.img -device scsi-hd,drive=vd0 -nographic \$*" > bin/solo_run.sh
-   chmod u+x bin/solo_run.sh
+   chmod a+x bin/solo_run.sh
 
    if [ ! -f img/9front_solo.img ]; then
       cp img/9front_base.img img/9front_solo.img
@@ -157,7 +165,7 @@ fi
 
 if [ $type = 'grid' ]; then
    echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 -nographic \$*" > bin/fsserve_run.sh
-   chmod u+x bin/fsserve_run.sh
+   chmod a+x bin/fsserve_run.sh
 
    if [ ! -f img/9front_fsserve.img ]; then
       cp img/9front_base.img img/9front_fsserve.img
@@ -177,7 +185,7 @@ fi
 
 if [ $type = 'grid' ]; then
    echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" > bin/authserve_run.sh
-   chmod u+x bin/authserve_run.sh
+   chmod a+x bin/authserve_run.sh
 
    if [ ! -f img/9front_authserve.img ]; then
       qemu-img create -f qcow2 img/9front_authserve.img 1M
@@ -194,7 +202,7 @@ fi
 
 if [ $type = 'grid' ]; then
    echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" > bin/cpuserve_run.sh
-   chmod u+x bin/cpuserve_run.sh
+   chmod a+x bin/cpuserve_run.sh
 
    if [ ! -f img/9front_cpuserve.img ]; then
       qemu-img create -f qcow2 img/9front_cpuserve.img 1M

@@ -1,7 +1,9 @@
 #!/bin/sh
 
-in="/tmp/belagos_in"
-out="/tmp/belagos_out"
+
+script_loc=`dirname $0`
+in="$script_loc/../img/belagos_in"
+out="$script_loc/../img/belagos_out"
 safe_owner="belagos"
 
 main()
@@ -28,16 +30,16 @@ out_user=`stat -c %U $out`
 in_perm=`stat -c %A $in`
 out_perm=`stat -c %A $out`
 
-if [ "$in_user" != "$safe_user" -a "$in_user" != `whoami` ]; then
-   pipe_error="Unsafe owner($in_user) on $in, $pipe_error"
-fi
-if [ "$in_perm" != "prw--w----" ]; then
+#if [ "$in_user" != "$safe_user" -a "$in_user" != `whoami` ]; then
+#   pipe_error="Unsafe owner($in_user) on $in, $pipe_error"
+#fi
+if [ "$in_perm" != "prw--w--w-" ]; then
    pipe_error="Unsafe permissions($in_perm) on $in, $pipe_error"
 fi
-if [ "$out_user" != "$safe_user" -a "$out_user" != `whoami` ]; then
-   pipe_error="Unsafe owner($out_user) on $out, $pipe_error"
-fi
-if [ "$out_perm" != "prw-r-----" ]; then
+#if [ "$out_user" != "$safe_user" -a "$out_user" != `whoami` ]; then
+#   pipe_error="Unsafe owner($out_user) on $out, $pipe_error"
+#fi
+if [ "$out_perm" != "prw-r--r--" ]; then
    pipe_error="Unsafe permissions($out_perm) on $out, $pipe_error"
 fi
 
