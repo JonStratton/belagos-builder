@@ -18,11 +18,11 @@ sudo mkdir /opt/belagos/bin/
 sudo cp bin/* /opt/belagos/bin/
 sudo mkdir /opt/belagos/img/
 
-sudo mkfifo -m 622 /opt/belagos/img/belagos_in
-sudo mkfifo -m 644 /opt/belagos/img/belagos_out
 
 # Install solo service
 if [ -f img/9front_solo.img ]; then
+   sudo mkfifo -m 622 /opt/belagos/img/solo_run_in
+   sudo mkfifo -m 644 /opt/belagos/img/solo_run_out
    sudo mv img/9front_solo.img /opt/belagos/img/
    sudo chown -R belagos:belagos /opt/belagos/img/*
    sudo sh -c '( echo "[Unit]
@@ -44,6 +44,12 @@ fi
 
 # Install fsserve service
 if [ -f img/9front_fsserve.img ]; then
+   sudo mkfifo -m 622 /opt/belagos/img/fsserve_run_in
+   sudo mkfifo -m 644 /opt/belagos/img/fsserve_run_out
+   sudo mkfifo -m 622 /opt/belagos/img/authserve_run_in
+   sudo mkfifo -m 644 /opt/belagos/img/authserve_run_out
+   sudo mkfifo -m 622 /opt/belagos/img/cpuserve_run_in
+   sudo mkfifo -m 644 /opt/belagos/img/cpuserve_run_out
    sudo mv img/9front_fsserve.img /opt/belagos/img/
    sudo mv img/9front_authserve.img /opt/belagos/img/
    sudo mv img/9front_cpuserve.img /opt/belagos/img/

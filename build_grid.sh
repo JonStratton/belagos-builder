@@ -103,14 +103,6 @@ if [ ! -f $local_iso ]; then
    gunzip $local_iso.gz
 fi
 
-###############
-# Named Pipes #
-###############
-	# This is our lazy IPC for belagos_client.sh to send disk passwords to boot_wait.exp
-
-mkfifo -m 622 img/belagos_in
-mkfifo -m 644 img/belagos_out
-
 ################
 # Base Install #
 ################
@@ -150,6 +142,8 @@ fi
 #############
 
 if [ $type != 'grid' ]; then
+   mkfifo -m 622 img/solo_run_in
+   mkfifo -m 644 img/solo_run_out
    mk_run_sh "bin/solo_run.sh"
    echo "qemu-system-$qemu_arch \$kvm -smp 2 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_solo.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/solo_run.sh
 
@@ -166,6 +160,8 @@ fi
 ###########
 
 if [ $type = 'grid' ]; then
+   mkfifo -m 622 img/fsserve_run_in
+   mkfifo -m 644 img/fsserve_run_out
    mk_run_sh "bin/fsserve_run.sh"
    echo "qemu-system-$qemu_arch \$kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/fsserve_run.sh
 
@@ -186,6 +182,8 @@ fi
 #############
 
 if [ $type = 'grid' ]; then
+   mkfifo -m 622 img/authserve_run_in
+   mkfifo -m 644 img/authserve_run_out
    mk_run_sh "bin/authserve_run.sh"
    echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/authserve_run.sh
 
@@ -203,6 +201,8 @@ fi
 ############
 
 if [ $type = 'grid' ]; then
+   mkfifo -m 622 img/cpuserve_run_in
+   mkfifo -m 644 img/cpuserve_run_out
    mk_run_sh "bin/cpuserve_run.sh"
    echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/cpuserve_run.sh
 
