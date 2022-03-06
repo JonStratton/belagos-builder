@@ -71,13 +71,11 @@ fi
    # Use Glenda's password for the install
 
 # Disk encryption on solo server (for now)
-if [ $type != 'grid' ]; then
-   if [ ! $DISK_PASS ]; then
-      default=""
-      read -p "Enter optional disk encryption password. If entered, this password will be required to boot: " DISK_PASS
-      [ -z $DISK_PASS ] && DISK_PASS=$default
-      export DISK_PASS
-   fi
+if [ ! $DISK_PASS ]; then
+   default=""
+   read -p "Enter optional disk encryption password. If entered, this password will be required to boot: " DISK_PASS
+   [ -z $DISK_PASS ] && DISK_PASS=$default
+   export DISK_PASS
 fi
 
 if [ ! $GLENDA_PASS ]; then
