@@ -1,10 +1,7 @@
 #!/bin/sh
+# boot_wait.sh is back from the grave. undead undead undead
 
-max_counter=600
-sleep='sleep 1'
-
-counter=0
-success=0
+sleep='sleep 10'
 
 for process in "$@"
 do
@@ -12,26 +9,22 @@ do
    chmod 600 /tmp/boot_wait.txt
 
    # Run Process in BG
-   echo $process
-   nohup $process > /tmp/boot_wait.txt 2>&1 &
+   echo bin/boot_pipe_menu.exp $process
+   nohup bin/boot_pipe_menu.exp $process > /tmp/boot_wait.txt 2>&1 &
 
    success=0
-   while [ $counter -lt $max_counter -a $success -eq 0 ]; do
-      if [ `grep "\# " /tmp/boot_wait.txt | wc -l` -ge 1 ]; then
+   while [ $success -eq 0 ]; do
+      if [ `grep "Final Status: Booted" /tmp/boot_wait.txt | wc -l` -ge 1 ]; then
          success=1
       else
+         tail -n 1 /tmp/boot_wait.txt
+         echo
          `$sleep`
-         counter=`expr $counter + 1`
       fi
    done
 
    rm /tmp/boot_wait.txt
 done
 
-if [ $success -eq 1 ]; then
-   echo "Success"
-   exit 0
-fi
-
-echo "Fail"
-exit 1
+echo "Success"
+exit 0

@@ -3,6 +3,7 @@
 set disk_pass ""
 set in_pipe ""
 set out_pipe ""
+set status "Booting"
 
 proc read_pipe {} {
    global in_pipe
@@ -36,9 +37,7 @@ proc menu {} {
 
 proc status_pipe {} {
    global status
-   foreach i [array names status] {
-      write_pipe "status($i): $status($i)"
-   }
+   write_pipe "$status"
 }
 
 proc exit_pipe {} {
@@ -79,7 +78,7 @@ expect {
       send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
       expect "Password: "
 
-      set status($runner) "Waiting on Disk Password"
+      set status "Waiting on Disk Password"
       while { $disk_pass eq "" } {
          menu
       }
@@ -102,7 +101,8 @@ expect {
 }
 
 expect "# "
-set status($runner) "on"
+set status "Booted"
+puts "\nFinal Status: $status"
 
 # Wait for commands from pipe
 while {1} {
