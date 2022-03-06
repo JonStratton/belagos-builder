@@ -1,11 +1,5 @@
 #!/bin/sh
 
-# If KVM is available, check so we can add it to our runners
-kvm=''
-#if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then
-#   kvm='-cpu host -enable-kvm'
-#fi
-
 # Arch for ISO and qemu
 iso_arch='386'
 qemu_arch='i386'
@@ -124,8 +118,18 @@ mkfifo -m 644 img/belagos_out
 ################
    # This will be converted to our fsserve
 
-echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_base.img -device scsi-hd,drive=vd0 -nographic \$*" > bin/base_run.sh
-chmod a+x bin/base_run.sh
+mk_run_sh()
+{
+echo "#!/bin/sh
+kvm=''
+if [ \`cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l\` -ge 1 ]; then
+   kvm='-cpu host -enable-kvm'
+fi" > $1
+chmod a+x $1
+}
+
+mk_run_sh "bin/base_run.sh"
+echo "#!/bin/sh\nqemu-system-$qemu_arch \$kvm -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_base.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/base_run.sh
 
 # Run base installer directly
 if [ ! -f img/9front_base.img ]; then
@@ -148,8 +152,8 @@ fi
 #############
 
 if [ $type != 'grid' ]; then
-   echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -smp 2 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_solo.img -device scsi-hd,drive=vd0 -nographic \$*" > bin/solo_run.sh
-   chmod a+x bin/solo_run.sh
+   mk_run_sh "bin/solo_run.sh"
+   echo "qemu-system-$qemu_arch \$kvm -smp 2 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_solo.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/solo_run.sh
 
    if [ ! -f img/9front_solo.img ]; then
       cp img/9front_base.img img/9front_solo.img
@@ -164,8 +168,8 @@ fi
 ###########
 
 if [ $type = 'grid' ]; then
-   echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 -nographic \$*" > bin/fsserve_run.sh
-   chmod a+x bin/fsserve_run.sh
+   mk_run_sh "bin/fsserve_run.sh"
+   echo "qemu-system-$qemu_arch \$kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/fsserve_run.sh
 
    if [ ! -f img/9front_fsserve.img ]; then
       cp img/9front_base.img img/9front_fsserve.img
@@ -184,8 +188,8 @@ fi
 #############
 
 if [ $type = 'grid' ]; then
-   echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" > bin/authserve_run.sh
-   chmod a+x bin/authserve_run.sh
+   mk_run_sh "bin/authserve_run.sh"
+   echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/authserve_run.sh
 
    if [ ! -f img/9front_authserve.img ]; then
       qemu-img create -f qcow2 img/9front_authserve.img 1M
@@ -201,8 +205,8 @@ fi
 ############
 
 if [ $type = 'grid' ]; then
-   echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" > bin/cpuserve_run.sh
-   chmod a+x bin/cpuserve_run.sh
+   mk_run_sh "bin/cpuserve_run.sh"
+   echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/cpuserve_run.sh
 
    if [ ! -f img/9front_cpuserve.img ]; then
       qemu-img create -f qcow2 img/9front_cpuserve.img 1M
