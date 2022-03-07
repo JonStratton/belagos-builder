@@ -6,7 +6,6 @@ trap "kill 0" 1 2 3 6
 in=""
 out=""
 
-# TODO, handle control-c to the tail isnt left open
 main()
 {
 tail -f $out &
@@ -43,6 +42,6 @@ else
 fi
 }
 
-args
+args $1
 main
 exit 0

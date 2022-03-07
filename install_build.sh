@@ -33,7 +33,7 @@ Type=forking
 TimeoutStartSec=600
 User=belagos
 WorkingDirectory=/opt/belagos
-ExecStart=/opt/belagos/bin/boot_wait.exp bin/solo_run.sh
+ExecStart=/opt/belagos/bin/boot_wait.sh bin/solo_run.sh
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/belagos_solo.service )'
 
@@ -62,7 +62,7 @@ Type=forking
 TimeoutStartSec=600
 User=belagos
 WorkingDirectory=/opt/belagos
-ExecStart=/opt/belagos/bin/boot_wait.exp bin/fsserve_run.sh bin/authserve_run.sh bin/cpuserve_run.sh
+ExecStart=/opt/belagos/bin/boot_wait.sh bin/fsserve_run.sh bin/authserve_run.sh bin/cpuserve_run.sh
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/belagos_grid.service )'
 
