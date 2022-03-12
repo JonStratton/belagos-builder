@@ -87,7 +87,7 @@ auth=192.168.9.4
 fs=192.168.9.3
 vgasize=text
 service=cpu
-nvram=/dev/sd00/nvram
+#nvram=/dev/sd00/nvram
 console=0' > /cfg/pxe/52540000ee04
 grep bootfile /cfg/plan9.ini >> /cfg/pxe/52540000ee04
 cp /cfg/pxe/52540000ee04 /cfg/pxe/52540000ee05

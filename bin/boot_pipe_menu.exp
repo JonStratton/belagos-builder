@@ -109,9 +109,10 @@ expect {
       send "\r"
    }
    "authid: " {
-      send "glenda\r"  
+      send "glenda\r"
       expect "authdom: "
-      send "localgrid\r"  
+      send "localgrid\r"
+      expect "secstore key: "
 
       set status "Waiting on glenda Password"
       set context "glenda_password"
@@ -120,26 +121,32 @@ expect {
       }
       # TODO, handle bad passwords
 
-      expect "secstore key: "
       send "$glenda_pass\r"
-      expect "password: " 
+      expect "password: "
       send "$glenda_pass\r"
-      expect "Password: " 
+      exp_continue
+   }
+   "Password: " {
       send "$glenda_pass\r"
-      expect "Confirm password: "
+      exp_continue
+   }
+   "Confirm password: " {
       send "$glenda_pass\r"
+      exp_continue
    }
    # Boot normally
    "bootargs is */dev/sd00/fscache*\]*" {
       send "\r"
    }
-   # Boots to prompt
-   "*# " {
+   "authserve# " {
+      send "\r"
+   }
+   "cpuserve# " {
       send "\r"
    }
 }
 
-expect "*# "
+expect "# "
 set status "Booted"
 puts "\nFinal Status: $status"
 

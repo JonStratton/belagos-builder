@@ -12,13 +12,15 @@ local_iso="9front.$iso_arch.iso"
 
 # grid, solo/cpu, auth, fs
 type='grid'
-if [ $1 ]
-then
+if [ $1 ]; then
    type=$1
 fi
 
 [ ! -d img ] && mkdir img
 [ ! -d bin ] && mkdir bin
+
+# Toggle on will prompt for passwords on boot
+secure_boot=""
 
 #######################
 # Disk and RAM Sizing #
@@ -70,12 +72,14 @@ fi
 ############
    # Use Glenda's password for the install
 
-# Disk encryption on solo server (for now)
-if [ ! $DISK_PASS ]; then
-   default=""
-   read -p "Enter optional disk encryption password. If entered, this password will be required to boot: " DISK_PASS
-   [ -z $DISK_PASS ] && DISK_PASS=$default
-   export DISK_PASS
+# Disk encryption
+if [ $secure_boot ]; then
+   if [ ! $DISK_PASS ]; then
+      default=""
+      read -p "Enter optional disk encryption password. If entered, this password will be required to boot: " DISK_PASS
+      [ -z $DISK_PASS ] && DISK_PASS=$default
+      export DISK_PASS
+   fi
 fi
 
 if [ ! $GLENDA_PASS ]; then
@@ -185,11 +189,17 @@ if [ $type = 'grid' ]; then
    mkfifo -m 622 img/authserve_run_in
    mkfifo -m 644 img/authserve_run_out
    mk_run_sh "bin/authserve_run.sh"
-   echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/authserve_run.sh
+   if [ ! $secure_boot ]; then
+      echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/authserve_run.sh
+   else
+      echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic \$*" >> bin/authserve_run.sh
+   fi
 
    if [ ! -f img/9front_authserve.img ]; then
-      qemu-img create -f qcow2 img/9front_authserve.img 1M
-      build_grid/9front_grid_pxe_client_nvram.exp bin/authserve_run.sh
+      if [ ! $secure_boot ]; then
+         qemu-img create -f qcow2 img/9front_authserve.img 1M
+         build_grid/9front_grid_pxe_client_nvram.exp bin/authserve_run.sh
+      fi
       build_grid/9front_authserver_changeuser.exp bin/authserve_run.sh
    fi
 
@@ -204,11 +214,14 @@ if [ $type = 'grid' ]; then
    mkfifo -m 622 img/cpuserve_run_in
    mkfifo -m 644 img/cpuserve_run_out
    mk_run_sh "bin/cpuserve_run.sh"
-   echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/cpuserve_run.sh
-
-   if [ ! -f img/9front_cpuserve.img ]; then
-      qemu-img create -f qcow2 img/9front_cpuserve.img 1M
-      build_grid/9front_grid_pxe_client_nvram.exp bin/cpuserve_run.sh
+   if [ ! $secure_boot ]; then
+      echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/cpuserve_run.sh
+      if [ ! -f img/9front_cpuserve.img ]; then
+         qemu-img create -f qcow2 img/9front_cpuserve.img 1M
+         build_grid/9front_grid_pxe_client_nvram.exp bin/cpuserve_run.sh
+      fi
+   else
+      echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic \$*" >> bin/cpuserve_run.sh
    fi
 fi
 

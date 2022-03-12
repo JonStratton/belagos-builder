@@ -29,12 +29,16 @@ expect {
       send "$glenda_pass\r"
       expect "Confirm password: "
       send "$glenda_pass\r"
+
+      #expect "*# "
+      #send "fshalt\r"
    }
-   "*# " {
+   "authserve# " {
       send "\r"
    }
 }
-expect "*# "
+
+expect "authserve# "
 send "auth/changeuser glenda\r"
 expect "Password:"
 send "$glenda_pass\r"
@@ -57,7 +61,7 @@ send "\r"
 
 if { $user_pass ne "" } {
    set user $::env(USER)
-   expect "*# "
+   expect "authserve# "
    send "auth/changeuser $user\r"
    expect "Password:"
    send "$user_pass\r"
@@ -79,6 +83,6 @@ if { $user_pass ne "" } {
    send "\r"
 }
 
-expect "*# "
+expect "authserve# "
 send "fshalt\r"
 expect eof
