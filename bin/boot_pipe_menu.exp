@@ -1,0 +1,155 @@
+#!/usr/bin/expect -f
+
+set disk_pass ""
+set glenda_pass ""
+set in_pipe ""
+set out_pipe ""
+set status "Booting"
+set context ""
+
+if {[info exists ::env(DISK_PASS)]} {
+   set disk_pass $::env(DISK_PASS)
+}
+
+if {[info exists ::env(GLENDA_PASS)]} {
+   set glenda_pass $::env(GLENDA_PASS)
+}
+
+proc read_pipe {} {
+   global in_pipe
+   set fp [open $in_pipe r]
+   set in_line [string trim [read $fp] ]
+   close $fp
+   return $in_line
+}
+
+proc write_pipe {out_line} {
+   global out_pipe
+   set fp [open $out_pipe w]
+   puts $fp $out_line
+   close $fp
+}
+
+proc menu {} {
+   global disk_pass
+   global glenda_pass
+   global context
+   set pipe_command [read_pipe]
+
+   if { $pipe_command == "halt" } {
+      exit_pipe
+   } elseif { $pipe_command == "password" } {
+      if { $context == "disk_password" } {
+         set disk_pass [read_pipe]
+      } elseif { $context == "glenda_password" } {
+         set glenda_pass [read_pipe]
+      }
+   } elseif { $pipe_command == "status" } {
+      status_pipe
+   } else {
+      write_pipe "status|password|halt|help"
+   }
+}
+
+proc status_pipe {} {
+   global status
+   write_pipe "$status"
+}
+
+proc exit_pipe {} {
+   global spawn_ids
+   global in_pipe
+   global out_pipe
+   foreach i [array names spawn_ids] {
+      set spawn_id $spawn_ids($i)
+      send "\r"
+      expect "# "
+      send "fshalt\r"
+      expect eof
+   }
+   exit 0
+}
+
+proc named_pipe_names {runner} {
+   global argv0
+   global in_pipe
+   global out_pipe
+   set script_loc [exec dirname $argv0]
+   set runner_base [exec basename $runner .sh]
+   set in_pipe [format "%s/../img/%s_in" $script_loc $runner_base ]
+   set out_pipe [format "%s/../img/%s_out" $script_loc $runner_base ]
+}
+
+set runner [lindex $argv 0]
+named_pipe_names $runner
+
+set timeout -1
+spawn $runner
+set spawn_ids($runner) $spawn_id
+expect {
+   # /dev/fs, in this case, means encryption
+   "bootargs is */dev/fs/fscache*\]*" {
+      send "!rc\r"
+      expect "% "
+      send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+      expect "Password: "
+
+      set status "Waiting on Disk Password"
+      set context "disk_password"
+      while { $disk_pass eq "" } {
+         menu
+      }
+      # TODO, handle bad passwords
+
+      send "$disk_pass\r"
+      expect "% "
+      send "exit\r"
+      expect "bootargs is */dev/fs/fscache*\]*"
+      send "\r"
+   }
+   "authid: " {
+      send "glenda\r"
+      expect "authdom: "
+      send "localgrid\r"
+      expect "secstore key: "
+
+      set status "Waiting on glenda Password"
+      set context "glenda_password"
+      while { $glenda_pass eq "" } {
+         menu
+      }
+      # TODO, handle bad passwords
+
+      send "$glenda_pass\r"
+      expect "password: "
+      send "$glenda_pass\r"
+      exp_continue
+   }
+   "Password: " {
+      send "$glenda_pass\r"
+      exp_continue
+   }
+   "Confirm password: " {
+      send "$glenda_pass\r"
+      exp_continue
+   }
+   # Boot normally
+   "bootargs is */dev/sd00/fscache*\]*" {
+      send "\r"
+   }
+   "authserve# " {
+      send "\r"
+   }
+   "cpuserve# " {
+      send "\r"
+   }
+}
+
+expect "# "
+set status "Booted"
+puts "\nFinal Status: $status"
+
+# Wait for commands from pipe
+while {1} {
+   menu
+}

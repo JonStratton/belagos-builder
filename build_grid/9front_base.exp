@@ -1,15 +1,19 @@
 #!/usr/bin/expect -f
 # Installing 9front usually just pounding return unless there is "no default". Then you choose the first item. If you see ">>>", just type w\rq\r
 
+set disk_pass ""
+if {[info exists ::env(DISK_PASS)]} {
+   set disk_pass $::env(DISK_PASS)
+}
+
 set runner [lindex $argv 0]
 set iso [lindex $argv 1]
 
 set timeout -1
 
 # Install base system. Use "-net user" so we can do this before rebooting
-spawn $runner -drive if=none,id=vd1,file=$iso -device scsi-cd,drive=vd1, -kernel iso_mount/*/9pc* -initrd plan9.ini -no-reboot
+spawn $runner -drive if=none,id=vd1,file=$iso -device scsi-cd,drive=vd1, -kernel 9pc* -initrd plan9.ini -no-reboot
 expect "bootargs is *"
-sleep 5
 send "\r"
 expect "user*:*"
 send "\r"
@@ -39,14 +43,42 @@ expect ">>>"
 send "w\r"
 expect ">>>"
 send "q\r"
-expect "Task to do *:*"
-send "\r"
-expect "Cwfs cache partition *:*"
-send "\r"
-expect "Cwfs worm partition *:*"
-send "\r"
-expect "Cwfs other partition *:*"
-send "\r"
+
+# Disk Encryption
+if { $disk_pass ne "" } {
+   expect "Task to do *:*"
+   send "!rc\r"
+   expect "term% "
+   send "disk/cryptsetup -f /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+   expect "Password: "
+   send "$disk_pass\r"
+   expect "Confirm: "
+   send "$disk_pass\r"
+   expect "term% "
+   send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+   expect "Password: "
+   send "$disk_pass\r"
+   expect "term% "
+   send "exit\r"
+   expect "Task to do *:*"
+   send "\r"
+   expect "Cwfs cache partition *:*"
+   send "/dev/fs/fscache\r"
+   expect "Cwfs worm partition *:*"
+   send "/dev/fs/fsworm\r"
+   expect "Cwfs other partition *:*"
+   send "/dev/fs/other\r"
+} else {
+   expect "Task to do *:*"
+   send "\r"
+   expect "Cwfs cache partition *:*"
+   send "\r"
+   expect "Cwfs worm partition *:*"
+   send "\r"
+   expect "Cwfs other partition *:*"
+   send "\r"
+}
+
 expect "Ream the filesystem? *:*"
 send "\r"
 expect "Task to do *:*"

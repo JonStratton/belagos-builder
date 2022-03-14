@@ -1,12 +1,38 @@
 #!/usr/bin/expect -f
 
+set disk_pass ""
+if {[info exists ::env(DISK_PASS)]} {
+   set disk_pass $::env(DISK_PASS)
+}
+set bootfs "/dev/sd00/fscache"
+
 set runner [lindex $argv 0]
 
 # Turn on auth
 set timeout -1
 spawn $runner
-expect "bootargs is *\] "
-send "local!/dev/sd00/fscache -c\r"
+# Turn on CPU Server
+set timeout -1
+spawn $runner
+expect {
+   # /dev/fs, in this case, means encryption
+   "bootargs is */dev/fs/fscache\]*" {
+      set bootfs "/dev/fs/fscache"
+      send "!rc\r"
+      expect "% "
+      send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+      expect "Password: "
+      send "$disk_pass\r"
+      expect "% "
+      send "exit\r"
+      expect "bootargs is */dev/fs/fscache\]*"
+      send "local!/dev/fs/fscache -c\r"
+   }
+   # Boot normally
+   "bootargs is */dev/sd00/fscache\]*" {
+      send "local!/dev/sd00/fscache -c\r"
+   }
+}
 expect "config:*"
 send "noauth\r"
 expect "config:*"
@@ -14,7 +40,7 @@ send "noauth\r"
 expect "config:*"
 send "end\r"
 expect "# "
-send "9fs 9fat; echo 'nobootprompt=local!/dev/sd00/fscache -a tcp!*!564' >>/n/9fat/plan9.ini\r"
+send "9fs 9fat; echo 'bootargs=local!$bootfs -a tcp!*!564' >>/n/9fat/plan9.ini\r"
 expect "# "
 send "fshalt\r"
 expect eof

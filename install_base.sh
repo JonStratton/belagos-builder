@@ -1,6 +1,6 @@
 #!/bin/sh
 
-package_list="iptables-persistent qemu-system-x86 vde2 uml-utilities expect 9mount"
+package_list="iptables-persistent qemu-system-x86 vde2 uml-utilities expect 9mount p7zip"
 
 # Add KVM if possible
 if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then
@@ -22,7 +22,7 @@ for package in $package_list; do
 done
 echo $new_packages > ./install_base_new_packages.txt
 
-# Create local glenda user and add her to the vde2-net group. This may eventually be our systemd running user on boot.
+# Add our user to vde2-net, so we can use tap0
 sudo usermod -a -G vde2-net $USER
 
 # Create tap0 interface for our VM Network

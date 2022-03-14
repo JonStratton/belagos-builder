@@ -1,11 +1,5 @@
 #!/bin/sh
 
-# If KVM is available, check so we can add it to our runners
-kvm=''
-#if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then
-#   kvm='-cpu host -enable-kvm'
-#fi
-
 # Arch for ISO and qemu
 iso_arch='386'
 qemu_arch='i386'
@@ -18,18 +12,19 @@ local_iso="9front.$iso_arch.iso"
 
 # grid, solo/cpu, auth, fs
 type='grid'
-if [ $1 ]
-then
+if [ $1 ]; then
    type=$1
 fi
 
 [ ! -d img ] && mkdir img
 [ ! -d bin ] && mkdir bin
 
+# Toggle on will prompt for passwords on boot
+secure_boot=$2
+
 #######################
 # Disk and RAM Sizing #
 #######################
-   # Just gobble up most. TODO, confirm with prompts
 
 # 512 for base debian gui, 64 for each plan9vm. Split the rest between the fsserve and the cpuserve(most)
 total_core=`cat /proc/meminfo | grep "^MemTotal:" | awk '{print $2}'`
@@ -43,9 +38,9 @@ authserve_core_default=64
 [ $arch = 'i686' ] && [ $cpuserve_core_default -gt 2000 ] && cpuserve_core_default=2000
 
 # 75% of the free disk for fsserve
-free_disk=`df -k | grep '/home/$' | awk '{print $4}'`
+free_disk=`df -k 2>/dev/null | grep '/home/$' | awk '{print $4}'`
 if [ ! $free_disk ]; then
-   free_disk=`df -k | grep ' /$' | awk '{print $4}'`
+   free_disk=`df -k 2>/dev/null | grep ' /$' | awk '{print $4}'`
 fi
 free_mb=`expr $free_disk / 1024`
 fsserve_disk_gb_default=`expr \( \( $free_mb \* 75 \) / 100 \) / 1024`G
@@ -76,6 +71,16 @@ fi
 ############
    # Use Glenda's password for the install
 
+# Disk encryption
+if [ $secure_boot ]; then
+   if [ ! $DISK_PASS ]; then
+      default=""
+      read -p "Enter optional disk encryption password. If entered, this password will be required to boot: " DISK_PASS
+      [ -z $DISK_PASS ] && DISK_PASS=$default
+      export DISK_PASS
+   fi
+fi
+
 if [ ! $GLENDA_PASS ]; then
    default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
    read -p "Enter password for glenda(default $default): " GLENDA_PASS
@@ -84,8 +89,8 @@ if [ ! $GLENDA_PASS ]; then
 fi
 
 if [ ! $USER_PASS ]; then
-   default=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c10`
-   read -p "Enter password for $USER(default $default): " USER_PASS
+   default=""
+   read -p "Enter password for $USER to create user: " USER_PASS
    [ -z $USER_PASS ] && USER_PASS=$default
    export USER_PASS
 fi
@@ -106,15 +111,25 @@ fi
 ################
    # This will be converted to our fsserve
 
-echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_base.img -device scsi-hd,drive=vd0 -nographic \$*" > bin/base_run.sh
-chmod u+x bin/base_run.sh
+mk_run_sh()
+{
+echo "#!/bin/sh
+kvm=''
+if [ \`cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l\` -ge 1 ]; then
+   kvm='-cpu host -enable-kvm'
+fi" > $1
+chmod a+x $1
+}
+
+mk_run_sh "bin/base_run.sh"
+echo "#!/bin/sh\nqemu-system-$qemu_arch \$kvm -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_base.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/base_run.sh
 
 # Run base installer directly
 if [ ! -f img/9front_base.img ]; then
    # Pull the kern and init out, so we can boot in console mode
-   mkdir iso_mount
-   sudo mount -t iso9660 -o loop $local_iso iso_mount
-   cp iso_mount/cfg/plan9.ini .
+   7z e $local_iso cfg/plan9.ini -aoa
+   7z e $local_iso $iso_arch/9pc* -aoa
+
    chmod 644 ./plan9.ini
    echo "console=0\n*acpi=1" >> ./plan9.ini
 
@@ -122,8 +137,7 @@ if [ ! -f img/9front_base.img ]; then
    build_grid/9front_base.exp bin/base_run.sh $local_iso
 
    rm ./plan9.ini
-   sudo umount iso_mount
-   rmdir iso_mount
+   rm ./9pc*
 fi
 
 #############
@@ -131,15 +145,16 @@ fi
 #############
 
 if [ $type != 'grid' ]; then
-   echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -smp 2 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_solo.img -device scsi-hd,drive=vd0 -nographic \$*" > bin/solo_run.sh
-   chmod u+x bin/solo_run.sh
+   mkfifo -m 622 img/solo_run_in
+   mkfifo -m 644 img/solo_run_out
+   mk_run_sh "bin/solo_run.sh"
+   echo "qemu-system-$qemu_arch \$kvm -smp 2 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_solo.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/solo_run.sh
 
    if [ ! -f img/9front_solo.img ]; then
       cp img/9front_base.img img/9front_solo.img
 
       # All Solo servers are CPU servers.
       build_grid/9front_base_cpuserve.exp bin/solo_run.sh
-      build_grid/9front_solo_noboot.exp bin/solo_run.sh
    fi
 fi
 
@@ -148,8 +163,10 @@ fi
 ###########
 
 if [ $type = 'grid' ]; then
-   echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 -nographic \$*" > bin/fsserve_run.sh
-   chmod u+x bin/fsserve_run.sh
+   mkfifo -m 622 img/fsserve_run_in
+   mkfifo -m 644 img/fsserve_run_out
+   mk_run_sh "bin/fsserve_run.sh"
+   echo "qemu-system-$qemu_arch \$kvm -m $fsserve_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_fsserve.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/fsserve_run.sh
 
    if [ ! -f img/9front_fsserve.img ]; then
       cp img/9front_base.img img/9front_fsserve.img
@@ -168,12 +185,20 @@ fi
 #############
 
 if [ $type = 'grid' ]; then
-   echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" > bin/authserve_run.sh
-   chmod u+x bin/authserve_run.sh
+   mkfifo -m 622 img/authserve_run_in
+   mkfifo -m 644 img/authserve_run_out
+   mk_run_sh "bin/authserve_run.sh"
+   if [ ! $secure_boot ]; then
+      echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/authserve_run.sh
+   else
+      echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic \$*" >> bin/authserve_run.sh
+   fi
 
    if [ ! -f img/9front_authserve.img ]; then
-      qemu-img create -f qcow2 img/9front_authserve.img 1M
-      build_grid/9front_grid_pxe_client_nvram.exp bin/authserve_run.sh
+      if [ ! $secure_boot ]; then
+         qemu-img create -f qcow2 img/9front_authserve.img 1M
+         build_grid/9front_grid_pxe_client_nvram.exp bin/authserve_run.sh
+      fi
       build_grid/9front_authserver_changeuser.exp bin/authserve_run.sh
    fi
 
@@ -185,12 +210,17 @@ fi
 ############
 
 if [ $type = 'grid' ]; then
-   echo "#!/bin/sh\nqemu-system-$qemu_arch $kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" > bin/cpuserve_run.sh
-   chmod u+x bin/cpuserve_run.sh
-
-   if [ ! -f img/9front_cpuserve.img ]; then
-      qemu-img create -f qcow2 img/9front_cpuserve.img 1M
-      build_grid/9front_grid_pxe_client_nvram.exp bin/cpuserve_run.sh
+   mkfifo -m 622 img/cpuserve_run_in
+   mkfifo -m 644 img/cpuserve_run_out
+   mk_run_sh "bin/cpuserve_run.sh"
+   if [ ! $secure_boot ]; then
+      echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=img/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/cpuserve_run.sh
+      if [ ! -f img/9front_cpuserve.img ]; then
+         qemu-img create -f qcow2 img/9front_cpuserve.img 1M
+         build_grid/9front_grid_pxe_client_nvram.exp bin/cpuserve_run.sh
+      fi
+   else
+      echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic \$*" >> bin/cpuserve_run.sh
    fi
 fi
 
@@ -199,5 +229,7 @@ fi
 ########################
 
 if [ $type = 'grid' ]; then
-   pkill qemu
+   bin/belagos_client.sh authserve_run halt
+   sleep 1
+   bin/belagos_client.sh fsserve_run halt
 fi

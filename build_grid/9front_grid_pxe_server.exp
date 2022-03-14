@@ -1,11 +1,16 @@
 #!/usr/bin/expect -f
 
+set disk_pass ""
+if {[info exists ::env(DISK_PASS)]} {
+   set disk_pass $::env(DISK_PASS)
+}
+
 set glenda_pass 'changeme'
 if {[info exists ::env(GLENDA_PASS)]} {
    set glenda_pass $::env(GLENDA_PASS)
 }
 
-set user_pass 'changeme'
+set user_pass ''
 if {[info exists ::env(USER_PASS)]} {
    set user_pass $::env(USER_PASS)
 }
@@ -15,6 +20,25 @@ set runner [lindex $argv 0]
 # Run final installer
 set timeout -1
 spawn $runner
+
+expect {
+   # /dev/fs, in this case, means encryption
+   "bootargs is */dev/fs/fscache*\]*" {
+      send "!rc\r"
+      expect "% "
+      send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+      expect "Password: "
+      send "$disk_pass\r"
+      expect "% "
+      send "exit\r"
+      expect "bootargs is */dev/fs/fscache*\]*"
+      send "\r"
+   }
+   # Boot normally
+   "bootargs is */dev/sd00/fscache*\]*" {
+      send "\r"
+   }
+}
 
 if { $user_pass ne "" } {
    set user $::env(USER)
