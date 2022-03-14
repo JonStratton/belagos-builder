@@ -2,6 +2,7 @@
 # boot_wait.sh is back from the grave. undead undead undead
 
 sleep='sleep 10'
+lastline=''
 
 for process in "$@"
 do
@@ -17,8 +18,11 @@ do
       if [ `grep "Final Status: Booted" /tmp/boot_wait.txt | wc -l` -ge 1 ]; then
          success=1
       else
-         tail -n 1 /tmp/boot_wait.txt
-         echo
+         curline=`tail -n 1 /tmp/boot_wait.txt`
+         if [ ! "$lastline" = "$curline"  ]; then
+            lastline=$curline
+            echo $lastline
+         fi
          `$sleep`
       fi
    done

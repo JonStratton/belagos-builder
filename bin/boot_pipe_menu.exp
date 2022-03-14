@@ -39,7 +39,6 @@ proc menu {} {
    if { $pipe_command == "halt" } {
       exit_pipe
    } elseif { $pipe_command == "password" } {
-      puts "$pipe_command $context"
       if { $context == "disk_password" } {
          set disk_pass [read_pipe]
       } elseif { $context == "glenda_password" } {

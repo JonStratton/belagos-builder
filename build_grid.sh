@@ -20,12 +20,11 @@ fi
 [ ! -d bin ] && mkdir bin
 
 # Toggle on will prompt for passwords on boot
-secure_boot=""
+secure_boot=$2
 
 #######################
 # Disk and RAM Sizing #
 #######################
-   # Just gobble up most. TODO, confirm with prompts
 
 # 512 for base debian gui, 64 for each plan9vm. Split the rest between the fsserve and the cpuserve(most)
 total_core=`cat /proc/meminfo | grep "^MemTotal:" | awk '{print $2}'`
@@ -39,9 +38,9 @@ authserve_core_default=64
 [ $arch = 'i686' ] && [ $cpuserve_core_default -gt 2000 ] && cpuserve_core_default=2000
 
 # 75% of the free disk for fsserve
-free_disk=`df -k | grep '/home/$' | awk '{print $4}'`
+free_disk=`df -k 2>/dev/null | grep '/home/$' | awk '{print $4}'`
 if [ ! $free_disk ]; then
-   free_disk=`df -k | grep ' /$' | awk '{print $4}'`
+   free_disk=`df -k 2>/dev/null | grep ' /$' | awk '{print $4}'`
 fi
 free_mb=`expr $free_disk / 1024`
 fsserve_disk_gb_default=`expr \( \( $free_mb \* 75 \) / 100 \) / 1024`G
@@ -230,5 +229,7 @@ fi
 ########################
 
 if [ $type = 'grid' ]; then
-   pkill qemu
+   bin/belagos_client.sh authserve_run halt
+   sleep 1
+   bin/belagos_client.sh fsserve_run halt
 fi

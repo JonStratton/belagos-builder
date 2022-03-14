@@ -9,13 +9,20 @@ out=""
 main()
 {
 tail -f $out &
-echo "status" > $in
-while [ 1 ]; do
-   read command_in
+
+if [ $1 ]; then
    cat <<EOF > $in
+$1
+EOF
+else
+   echo "status" > $in
+   while [ 1 ]; do
+      read command_in
+      cat <<EOF > $in
 $command_in
 EOF
-done
+   done
+fi
 }
 
 args()
@@ -43,5 +50,5 @@ fi
 }
 
 args $1
-main
+main $2
 exit 0
