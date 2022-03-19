@@ -31,10 +31,11 @@ inbound()
    fi
 
    # fs: 564, auth: 567, cpu: 17019 and 17029
-   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:564
-   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 567 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee04]:567
-   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17019 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17019
-   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17020 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee05]:17020
+   . ./env.sh
+   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [$fsserve6]:564
+   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 567 -j DNAT --to-destination [$authserve]:567
+   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17019 -j DNAT --to-destination [$cpuserve]:17019
+   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17020 -j DNAT --to-destination [$cpuserve]:17020
    sudo sh -c '( ip6tables-save > /etc/iptables/rules.v6 )'
 }
 

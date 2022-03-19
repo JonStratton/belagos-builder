@@ -1,0 +1,147 @@
+#!/usr/bin/expect -f
+
+set disk_pass ""
+if {[info exists ::env(DISK_PASS)]} {
+   set disk_pass $::env(DISK_PASS)
+}
+
+set glenda_pass ""
+if {[info exists ::env(GLENDA_PASS)]} {
+   set glenda_pass $::env(GLENDA_PASS)
+}
+
+set bootfs "/dev/sd00/fscache"
+
+set runner [lindex $argv 0]
+set type [lindex $argv 1]
+sleep 10
+
+# Turn on CPU Server
+set timeout -1
+spawn $runner
+if { $disk_pass ne "" } {
+   expect "boot*\] "
+   send "!rc\r"
+   expect "% "
+   send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+   expect "Password: "
+   send "$disk_pass\r"
+   expect "% "
+   send "exit\r"
+}
+expect "boot*\] "
+send "\r"
+expect "user*:*"
+send "\r"
+expect "term% "
+send "9fs 9fat; echo 'service=cpu' >>/n/9fat/plan9.ini\r"
+expect "term% "
+send "fshalt\r"
+expect eof
+
+# Create glenda user?
+spawn $runner
+if { $disk_pass ne "" } {
+   expect "boot*\] "
+   send "!rc\r"
+   expect "% "
+   send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+   expect "Password: "
+   send "$disk_pass\r"
+   expect "% "
+   send "exit\r"
+}
+expect "boot*\] "
+send "\r"
+expect "authid:*"
+send "glenda\r"
+expect "authdom:*"
+send "localgrid\r"
+expect "secstore key:*"
+send "$glenda_pass\r"
+expect "password:*"
+send "$glenda_pass\r"
+expect "# "
+send "fshalt\r"
+expect eof
+
+# Turn on 9p/fs Serve
+spawn $runner
+expect {
+   # /dev/fs, in this case, means encryption
+   "bootargs is */dev/fs/fscache\]*" {
+      set bootfs "/dev/fs/fscache"
+      send "!rc\r"
+      expect "% "
+      send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+      expect "Password: "
+      send "$disk_pass\r"
+      expect "% "
+      send "exit\r"
+      expect "bootargs is */dev/fs/fscache\]*"
+      send "local!/dev/fs/fscache -c\r"
+   }
+   # Boot normally
+   "bootargs is */dev/sd00/fscache\]*" {
+      send "local!/dev/sd00/fscache -c\r"
+   }
+}
+expect "config:*"
+send "noauth\r"
+expect "config:*"
+send "noauth\r"
+expect "config:*"
+send "end\r"
+expect "# "
+send "9fs 9fat; echo 'bootargs=local!$bootfs -a tcp!*!564' >>/n/9fat/plan9.ini\r"
+expect "# "
+send "fshalt\r"
+expect eof
+
+# New user, and final install rc scripts
+spawn $runner
+expect {
+   # /dev/fs, in this case, means encryption
+   "bootargs is */dev/fs/fscache*\]*" {
+      send "!rc\r"
+      expect "% "
+      send "disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other\r"
+      expect "Password: "
+      send "$disk_pass\r"
+      expect "% "
+      send "exit\r"
+      expect "bootargs is */dev/fs/fscache*\]*"
+      send "\r"
+   }
+   # Boot normally
+   "bootargs is */dev/sd00/fscache*\]*" {
+      send "\r"
+   }
+}
+expect "# "
+send "mkdir belagos_install\r"
+expect "# "
+send "chmod 777 belagos_install\r"
+expect "# "
+
+# 9mount and copy scripts
+catch {exec rmdir fsserve_9fs}
+exec mkdir fsserve_9fs
+exec 9mount "tcp!192.168.9.3" fsserve_9fs
+exec cp {*}[glob rc/*.rc] fsserve_9fs/usr/glenda/belagos_install/
+sleep 5
+exec 9umount fsserve_9fs
+exec rmdir fsserve_9fs
+
+send "chmod 700 belagos_install/\r"
+expect "# "
+if {$type eq "grid"} {
+   puts "grid"
+   send "belagos_install/9front_grid_pxe_server.rc\r"
+} else {
+   puts "not grid"
+   send "belagos_install/9front_solo.rc\r"
+}
+expect "# "
+send "fshalt\r"
+expect eof

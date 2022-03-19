@@ -76,8 +76,8 @@ proc named_pipe_names {runner} {
    global out_pipe
    set script_loc [exec dirname $argv0]
    set runner_base [exec basename $runner .sh]
-   set in_pipe [format "%s/../img/%s_in" $script_loc $runner_base ]
-   set out_pipe [format "%s/../img/%s_out" $script_loc $runner_base ]
+   set in_pipe [format "%s/../var/%s_in" $script_loc $runner_base ]
+   set out_pipe [format "%s/../var/%s_out" $script_loc $runner_base ]
 }
 
 set runner [lindex $argv 0]
