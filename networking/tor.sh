@@ -1,4 +1,5 @@
 #!/bin/sh
+script_loc=`dirname $0`
 
 outbound()
 {
@@ -32,13 +33,14 @@ inbound()
       install
    fi
 
+   . $script_loc/../var/env.sh
    sudo sh -c "( echo \"
 HiddenServiceDir /var/lib/tor/hidden_service/
-HiddenServicePort 564 192.168.9.3:564
-HiddenServicePort 567 192.168.9.4:567
-HiddenServicePort 5356 192.168.9.4:5356
-HiddenServicePort 17019 192.168.9.5:17019
-HiddenServicePort 17020 192.168.9.5:17020\" >> /etc/tor/torrc )"
+HiddenServicePort 564 $fsserve:564
+HiddenServicePort 567 $authserve:567
+HiddenServicePort 5356 $authserve:5356
+HiddenServicePort 17019 $cpuserve:17019
+HiddenServicePort 17020 $cpuserve:17020\" >> /etc/tor/torrc )"
 
    sudo systemctl restart tor
 }

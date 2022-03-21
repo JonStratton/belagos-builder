@@ -1,0 +1,38 @@
+#!/bin/rc
+
+# Set up base networking
+echo 'database=
+   file=/net/ndb
+   file=/lib/ndb/local
+   file=/lib/ndb/common
+
+dom=
+   ns=A.ROOT-SERVERS.NET
+   ns=B.ROOT-SERVERS.NET
+   ns=C.ROOT-SERVERS.NET
+   ns=D.ROOT-SERVERS.NET
+   ns=E.ROOT-SERVERS.NET
+   ns=F.ROOT-SERVERS.NET
+   ns=G.ROOT-SERVERS.NET
+   ns=H.ROOT-SERVERS.NET
+   ns=I.ROOT-SERVERS.NET
+   ns=J.ROOT-SERVERS.NET
+   ns=K.ROOT-SERVERS.NET
+   ns=L.ROOT-SERVERS.NET
+   ns=M.ROOT-SERVERS.NET
+
+ip=127.0.0.1 sys=localhost dom=localhost
+
+## For DHCP Client
+#sys=fsserve dom=fsserve.localgrid ether=52540000ee03
+
+sys=solo ether=52540000ee03 ip=192.168.9.3
+   ipmask=255.255.255.0 ipgw=192.168.9.1 dns=192.168.9.1
+   ip=fdfc::5054:ff:fe00:ee03 ip=fdfc::5054:ff:fe00:ee03 ipmask=/64 ipgw=fdfc::1' > /lib/ndb/local
+
+# Reload network config
+ip/ipconfig
+
+# Networking - Add static route for all IPv6 as it doesnt seem to be using our radvd as the default route
+mkdir /cfg/solo/
+echo 'echo ''add :: :: fdfc::1'' >/net/iproute' >> /cfg/solo/cpurc
