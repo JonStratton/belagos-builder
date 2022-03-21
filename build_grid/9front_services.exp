@@ -118,29 +118,36 @@ expect {
       send "\r"
    }
 }
+
+# Upload to a hard to guess dir for a little more security
+set uploaddir [exec head -c1000 /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c30]
 expect "# "
-send "mkdir belagos_install\r"
+send "mkdir /usr/public\r"
 expect "# "
-send "chmod 777 belagos_install\r"
+send "chmod 777 /usr/public\r"
+expect "# "
+send "mkdir /usr/public/upload\r"
+expect "# "
+send "chmod 773 /usr/public/upload\r"
+expect "# "
+send "mkdir /usr/public/upload/$uploaddir\r"
+expect "# "
+send "chmod 773 /usr/public/upload/$uploaddir\r"
 expect "# "
 
 # 9mount and copy scripts
-catch {exec rmdir fsserve_9fs}
-exec mkdir fsserve_9fs
-exec 9mount "tcp!192.168.9.3" fsserve_9fs
-exec cp {*}[glob rc/*.rc] fsserve_9fs/usr/glenda/belagos_install/
+catch {exec rmdir var/main_public}
+exec mkdir var/main_public
+exec 9mount "tcp!192.168.9.3" var/main_public
+exec cp {*}[glob rc/*.rc] var/main_public/usr/public/upload/$uploaddir/
 sleep 5
-exec 9umount fsserve_9fs
-exec rmdir fsserve_9fs
+exec 9umount var/main_public
+exec rmdir var/main_public
 
-send "chmod 700 belagos_install/\r"
-expect "# "
 if {$type eq "grid"} {
-   puts "grid"
-   send "belagos_install/9front_grid_pxe_server.rc\r"
+   send "/usr/public/upload/$uploaddir/9front_grid_pxe_server.rc\r"
 } else {
-   puts "not grid"
-   send "belagos_install/9front_solo.rc\r"
+   send "/usr/public/upload/$uploaddir/9front_solo.rc\r"
 }
 expect "# "
 send "fshalt\r"

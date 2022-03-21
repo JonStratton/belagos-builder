@@ -1,4 +1,5 @@
 #!/bin/sh
+script_loc=`dirname $0`
 
 outbound()
 {
@@ -30,7 +31,7 @@ inbound()
    fi
 
    # iptables commands for direct connections?
-   . ./env.sh
+   . $script_loc/../var/env.sh
    sudo sysctl -w net.ipv4.ip_forward=1
    sudo iptables -t nat -I PREROUTING -p tcp --dport 564 -j DNAT --to-destination $fsserve:564
    sudo iptables -t nat -I PREROUTING -p tcp --dport 567 -j DNAT --to-destination $authserve:567

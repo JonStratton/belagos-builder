@@ -187,27 +187,37 @@ if [ $type = 'grid' ]; then
    fi
 fi
 
+#######
+# Env #
+#######
+
+if [ $type = 'grid' ]; then
+   echo "type='grid'
+fsserve='192.168.9.3'
+fsserve6='fdfc::5054:ff:fe00:ee03'
+authserve='192.168.9.4'
+authserve6='fdfc::5054:ff:fe00:ee04'
+cpuserve='192.168.9.5'
+cpuserve6='fdfc::5054:ff:fe00:ee05'"> var/env.sh
+else
+   echo "type='solo'
+fsserve='192.168.9.3'
+fsserve6='fdfc::5054:ff:fe00:ee03'
+authserve='192.168.9.3'
+authserve6='fdfc::5054:ff:fe00:ee03'
+cpuserve='192.168.9.3'
+cpuserve6='fdfc::5054:ff:fe00:ee03'"> var/env.sh
+fi
+
+echo "secure_boot=$secure_boot" >> var/env.sh
+chmod 755 var/env.sh
+
 ########################
 # Turn down everything #
 ########################
 
 if [ $type = 'grid' ]; then
-   echo "fsserve='192.168.9.3'
-fsserve6='fdfc::5054:ff:fe00:ee03'
-authserve='192.168.9.4'
-authserve6='fdfc::5054:ff:fe00:ee04'
-cpuserve='192.168.9.5'
-cpuserve6='fdfc::5054:ff:fe00:ee05'"> networking/env.sh
    bin/belagos_client.sh authserve_run halt
    sleep 1
    bin/belagos_client.sh main_run halt
-else
-   echo "fsserve='192.168.9.3'
-fsserve6='fdfc::5054:ff:fe00:ee03'
-authserve='192.168.9.3'
-authserve6='fdfc::5054:ff:fe00:ee03'
-cpuserve='192.168.9.3'
-cpuserve6='fdfc::5054:ff:fe00:ee03'"> networking/env.sh
 fi
-
-chmod 755 networking/env.sh

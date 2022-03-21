@@ -1,4 +1,5 @@
 #!/bin/sh
+script_loc=`dirname $0`
 
 outbound()
 {
@@ -32,7 +33,7 @@ inbound()
       install
    fi
 
-   . ./env.sh
+   . $script_loc/../var/env.sh
    sudo sh -c "( echo \"
 HiddenServiceDir /var/lib/tor/hidden_service/
 HiddenServicePort 564 $fsserve:564
