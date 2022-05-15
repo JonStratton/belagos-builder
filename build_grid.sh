@@ -114,7 +114,7 @@ chmod a+x $1
 }
 
 mk_run_sh "bin/base_run.sh"
-echo "#!/bin/sh\nqemu-system-$qemu_arch \$kvm -m $main_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=var/9front_base.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/base_run.sh
+echo "qemu-system-$qemu_arch \$kvm -m $main_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=var/9front_base.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/base_run.sh
 
 # Run base installer directly
 if [ ! -f var/9front_base.img ]; then
@@ -136,6 +136,9 @@ fi
 # Main #
 ########
    # For solo servers with services exposed, or a file server in a grid
+
+rm var/*_run_in
+rm var/*_run_out
 
 mkfifo -m 622 var/main_run_in
 mkfifo -m 644 var/main_run_out

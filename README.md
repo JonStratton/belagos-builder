@@ -12,14 +12,13 @@ This is a set of tools that creates a small self contained grid of plan9 qemu VM
 	fsserve.localgrid / 192.168.9.3 / fdfc::5054:ff:fe00:ee03
 	authserve.localgrid / 192.168.9.4 / fdfc::5054:ff:fe00:ee04
 	cpuserve.localgrid / 192.168.9.5 / fdfc::5054:ff:fe00:ee05
-	termserve.localgrid / 192.168.9.6 / fdfc::5054:ff:fe00:ee06
 
 ## How to Install
 
 To build a grid, run the following:
 
 	./install_base.sh
-	newgrp vde2-net
+	sudo reboot
 	./build_grid.sh
 
 You will then be prompted for some information about the VMs to build, such as disk and memory size, and passwords. If you want to just build a single Plan 9 VM, run the above with “solo” as an argument:
@@ -42,6 +41,15 @@ If you entered a disk encryption password for the VMs, you can input it to the s
 	...
 	password
 	MyDiskPassword1!
+
+You can connect to installed builds with drawterm:
+
+	./install_drawterm.sh
+	/opt/drawterm*/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda
+
+or
+
+	/opt/drawterm*/drawterm -h 192.168.9.5 -a 192.168.9.4 -u glenda
 
 ### Uninstall
 
