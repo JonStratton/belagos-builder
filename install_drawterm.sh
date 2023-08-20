@@ -6,9 +6,10 @@
 install()
 {
 sudo apt-get install libx11-dev libxt-dev build-essential
-wget https://code.9front.org/hg/drawterm/archive/tip.tar.gz -P /tmp
-sudo tar xzf /tmp/tip.tar.gz -C /opt
-cd /opt/drawterm-*/
+wget https://github.com/9front/drawterm/archive/refs/heads/front.zip -P /tmp
+sudo unzip /tmp/front.zip -d /opt
+rm /tmp/front.zip
+cd /opt/drawterm-front/
 sudo CONF=unix make
 sudo ln -s `pwd`/drawterm /usr/local/bin/drawterm
 }
