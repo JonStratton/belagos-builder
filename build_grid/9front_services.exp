@@ -61,6 +61,8 @@ expect "secstore key:*"
 send "$glenda_pass\r"
 expect "password:*"
 send "$glenda_pass\r"
+expect "enable legacy p9sk1*"
+send "\r"
 expect "# "
 send "fshalt\r"
 expect eof

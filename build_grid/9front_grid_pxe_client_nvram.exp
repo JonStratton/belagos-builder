@@ -18,15 +18,15 @@ expect {
       send "$glenda_pass\r"
       expect "password: "
       send "$glenda_pass\r"
+      expect "enable legacy p9sk1*"
+      send "\r"
       exp_continue
    }
    "Password:" {
-      puts "1"
       send "$glenda_pass\r"
       exp_continue
    }
    "Confirm password:" {
-      puts "2"
       send "$glenda_pass\r"
       exp_continue
    }
@@ -36,7 +36,7 @@ expect {
 
 # nvram
 expect "# "
-send "belagos_install/small_nvram.rc\r"
+send "/usr/public/upload/*/small_nvram.rc\r"
 
 expect "# "
 send "auth/wrkey\r"
@@ -48,6 +48,8 @@ expect "secstore key:"
 send "$glenda_pass\r"
 expect "password:"
 send "$glenda_pass\r"
+expect "enable legacy p9sk1*"
+send "\r"
 expect "# "
 send "fshalt\r"
 expect eof

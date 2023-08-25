@@ -143,6 +143,9 @@ expect {
    "cpuserve# " {
       send "\r"
    }
+   "enable legacy p9sk1*" {
+      send "\r"
+   }
 }
 
 expect "# "
