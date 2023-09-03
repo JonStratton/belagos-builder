@@ -70,22 +70,21 @@ proc exit_pipe {} {
    exit 0
 }
 
-proc named_pipe_names {runner} {
+proc named_pipe_names {type} {
    global argv0
    global in_pipe
    global out_pipe
    set script_loc [exec dirname $argv0]
-   set runner_base [exec basename $runner .sh]
-   set in_pipe [format "%s/../var/%s_in" $script_loc $runner_base ]
-   set out_pipe [format "%s/../var/%s_out" $script_loc $runner_base ]
+   set in_pipe [format "%s/../grid/%s_in" $script_loc $type ]
+   set out_pipe [format "%s/../grid/%s_out" $script_loc $type ]
 }
 
-set runner [lindex $argv 0]
-named_pipe_names $runner
+set type [lindex $argv 0]
+named_pipe_names $type
 
 set timeout -1
-spawn $runner
-set spawn_ids($runner) $spawn_id
+spawn bin/qemu_run.sh $type
+set spawn_ids($type) $spawn_id
 expect {
    # /dev/fs, in this case, means encryption
    "bootargs is */dev/fs/fscache*\]*" {

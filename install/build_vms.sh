@@ -28,12 +28,12 @@ secure_boot=$2
 # 512 for base debian gui, 64 for each plan9vm. Split the rest between the fsserve and the cpuserve(most)
 total_core=`cat /proc/meminfo | grep "^MemTotal:" | awk '{print $2}'`
 core_free_mb=`expr \( $total_core / 1024 \) - 512 - \( 64 \* 3 \)`
-fsserve_core_default=`expr \( \( $core_free_mb \* 25 \) / 100 \) + 64`
+mainserve_core_default=`expr \( \( $core_free_mb \* 25 \) / 100 \) + 64`
 cpuserve_core_default=`expr \( \( $core_free_mb \* 75 \) / 100 \) + 64`
 authserve_core_default=64
 
 # Overwrite defaults if above 2gb for 32 bit VMs.
-[ $arch = 'i686' ] && [ $fsserve_core_default -gt 2000 ] && fsserve_core_default=2000
+[ $arch = 'i686' ] && [ $mainserve_core_default -gt 2000 ] && mainserve_core_default=2000
 [ $arch = 'i686' ] && [ $cpuserve_core_default -gt 2000 ] && cpuserve_core_default=2000
 
 # 75% of the free disk for fsserve
@@ -50,8 +50,8 @@ main_disk_gb_default=`expr \( \( $free_mb \* 75 \) / 100 \) / 1024`G
 if [ $type = 'grid' ]; then
    [ $core_free_mb -lt 704 ] && echo "Warning, you seem to have less RAM than can run your base OS plus 3 VMs"
 
-   read -p "RAM in MB for fsserve(default $fsserve_core_default): " main_core
-   [ -z $main_core ] && main_core=$fsserve_core_default
+   read -p "RAM in MB for fsserve(default $mainserve_core_default): " main_core
+   [ -z $main_core ] && main_core=$mainserve_core_default
    read -p "RAM in MB for cpuserve(default $cpuserve_core_default): " cpuserve_core
    [ -z $cpuserve_core ] && cpuserve_core=$cpuserve_core_default
    read -p "RAM in MB for authserve(default $authserve_core_default): " authserve_core
@@ -103,20 +103,16 @@ fi
 
 if [ $type = 'grid' ]; then
    echo "type='grid'
-install_ip='192.168.9.3'
-install_ip6='fdfc::5054:ff:fe00:ee0'
-fsserve_ip='192.168.9.3'
-fsserve_ip6='fdfc::5054:ff:fe00:ee03'
+mainserve_ip='192.168.9.3'
+mainserve_ip6='fdfc::5054:ff:fe00:ee03'
 authserve_ip='192.168.9.4'
 authserve_ip6='fdfc::5054:ff:fe00:ee04'
 cpuserve_ip='192.168.9.5'
 cpuserve_ip6='fdfc::5054:ff:fe00:ee05'"> grid/env.sh
 else
    echo "type='solo'
-install_ip='192.168.9.3'
-install_ip6='fdfc::5054:ff:fe00:ee0'
-fsserve_ip='192.168.9.3'
-fsserve_ip6='fdfc::5054:ff:fe00:ee03'
+mainserve_ip='192.168.9.3'
+mainserve_ip6='fdfc::5054:ff:fe00:ee03'
 authserve_ip='192.168.9.3'
 authserve_ip6='fdfc::5054:ff:fe00:ee03'
 cpuserve_ip='192.168.9.3'
@@ -125,23 +121,26 @@ fi
 
 echo "qemu_arch='$qemu_arch'
 secure_boot=$secure_boot
-install_MAC='52:54:00:00:EE:03'
-install_ram='$main_core'
 install_disk='grid/9front_install.img'
-install_cores='1'
-fsserve_MAC='52:54:00:00:EE:03'
-fsserve_ram='$main_core'
-fsserve_disk='grid/9front_main.img'
-fsserve_cores='1'
+mainserve_MAC='52:54:00:00:EE:03'
+mainserve_ram='$main_core'
+mainserve_disk='grid/9front_main.img'
+mainserve_cores='1'
 authserve_MAC='52:54:00:00:EE:04'
 authserve_ram='$authserve_core'
-authserve_disk='grid/9front_authserve.img'
 authserve_cores='1'
 cpuserve_MAC='52:54:00:00:EE:05'
 cpuserve_ram='$cpuserve_core'
-cpuserve_disk='grid/9front_cpuserve.img'
 cpuserve_cores='4'
 " >> grid/env.sh
+
+if [ $secure_boot ]; then
+   echo "authserve_disk=''" >> grid/env.sh
+   echo "cpuserve_disk=''" >> grid/env.sh
+else
+   echo "authserve_disk='grid/9front_authserve.img'" >> grid/env.sh
+   echo "cpuserve_disk='grid/9front_cpuserve.img'" >> grid/env.sh
+fi
 
 chmod 755 grid/env.sh
 
@@ -160,33 +159,31 @@ if [ ! -f grid/9front_install.img ]; then
    echo "console=0\n*acpi=1" >> ./plan9.ini
 
    qemu-img create -f qcow2 grid/9front_install.img $main_disk_gb
-   echo "install/9front_base.exp ./qemu_run.sh install $local_iso"
-   #install/9front_base.exp ./qemu_run.sh install $local_iso
+   install/9front_installer.exp $local_iso
 
-   #rm ./plan9.ini
-   #rm ./9pc*
+   rm ./plan9.ini
+   rm ./9pc*
 fi
-exit 0;
 
-########
-# Main #
-########
+###########
+# Install #
+###########
    # For solo servers with services exposed, or a file server in a grid
 
-rm grid/*_run_in
-rm grid/*_run_out
+rm grid/*_in
+rm grid/*_out
 
 # Package scripts in an ISO
 mkisofs -o grid/plan9Scripts.iso ./plan9
 
-mkfifo -m 622 grid/main_run_in
-mkfifo -m 644 grid/main_run_out
+mkfifo -m 622 grid/main_in
+mkfifo -m 644 grid/main_out
 
 if [ ! -f grid/9front_main.img ]; then
    cp grid/9front_install.img grid/9front_main.img
 
    # Expose the services
-   install/9front_services.exp "./qemu_run.sh fs" $type
+   install/9front_services.exp $type
 fi
 
 ###################
@@ -194,36 +191,27 @@ fi
 ###################
 
 if [ $type = 'grid' ]; then
-   bin/boot_wait.sh bin/main_run.sh
+   bin/boot_wait.sh main
 
    # AUTHSERVE
-   mkfifo -m 622 grid/authserve_run_in
-   mkfifo -m 644 grid/authserve_run_out
-   mk_run_sh "bin/authserve_run.sh"
-   if [ ! $secure_boot ]; then
-      echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/authserve_run.sh
-   else
-      echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic \$*" >> bin/authserve_run.sh
-   fi
+   mkfifo -m 622 grid/auth_in
+   mkfifo -m 644 grid/auth_out
 
    if [ ! $secure_boot ]; then
       qemu-img create -f qcow2 grid/9front_authserve.img 1M
-      install/9front_grid_pxe_client_nvram.exp bin/authserve_run.sh
+      install/9front_grid_pxe_client_nvram.exp auth
    fi
-   install/9front_authserver_changeuser.exp bin/authserve_run.sh
+   install/9front_authserver_changeuser.exp
 
-   bin/boot_wait.sh bin/authserve_run.sh
+   # Need the auth serve to create the CPU Server
+   bin/boot_wait.sh auth
 
    # CPUSERVE
-   mkfifo -m 622 grid/cpuserve_run_in
-   mkfifo -m 644 grid/cpuserve_run_out
-   mk_run_sh "bin/cpuserve_run.sh"
+   mkfifo -m 622 grid/cpu_in
+   mkfifo -m 644 grid/cpu_out
    if [ ! $secure_boot ]; then
-      echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/cpuserve_run.sh
       qemu-img create -f qcow2 grid/9front_cpuserve.img 1M
-      install/9front_grid_pxe_client_nvram.exp bin/cpuserve_run.sh
-   else
-      echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic \$*" >> bin/cpuserve_run.sh
+      install/9front_grid_pxe_client_nvram.exp cpu
    fi
 fi
 
@@ -232,7 +220,7 @@ fi
 ########################
 
 if [ $type = 'grid' ]; then
-   bin/belagos_client.sh authserve_run halt
+   bin/belagos_client.sh auth halt
    sleep 1
-   bin/belagos_client.sh main_run halt
+   bin/belagos_client.sh main halt
 fi

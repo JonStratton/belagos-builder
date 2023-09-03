@@ -10,12 +10,10 @@ if {[info exists ::env(USER_PASS)]} {
    set user_pass $::env(USER_PASS)
 }
 
-set runner [lindex $argv 0]
-
 set timeout -1
 
 # Create Users
-spawn $runner
+spawn bin/qemu_run.sh auth
 expect {
    "authid: " {
       send "glenda\r"
@@ -31,9 +29,6 @@ expect {
       send "$glenda_pass\r"
       expect "Confirm password: "
       send "$glenda_pass\r"
-
-      #expect "*# "
-      #send "fshalt\r"
    }
    "authserve# " {
       send "\r"

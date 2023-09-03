@@ -1,6 +1,6 @@
 #!/bin/sh
 
-package_list="iptables-persistent qemu-system-x86 vde2 uml-utilities expect 9mount p7zip-full"
+package_list="iptables-persistent qemu-system-x86 vde2 uml-utilities expect p7zip-full"
 
 # Add KVM if possible
 if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then

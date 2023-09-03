@@ -6,13 +6,12 @@ if {[info exists ::env(DISK_PASS)]} {
    set disk_pass $::env(DISK_PASS)
 }
 
-set runner [lindex $argv 0]
-set iso [lindex $argv 1]
+set iso [lindex $argv 0]
 
 set timeout -1
 
 # Install base system. Use "-net user" so we can do this before rebooting
-spawn $runner install $iso
+spawn bin/qemu_run.sh install $iso
 expect "bootargs is *"
 send "\r"
 expect "user*:*"

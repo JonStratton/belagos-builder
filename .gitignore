@@ -2,3 +2,4 @@
 *.img
 install_base_new_packages.txt
 nohup.out
+grid/

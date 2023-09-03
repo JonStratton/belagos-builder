@@ -13,23 +13,17 @@ boot=''
 
 case $1 in
    install)
-      mac=$install_MAC
-      ram=$install_ram
+      mac=$mainserve_MAC
+      ram=$mainserve_ram
       disk=$install_disk
-      cores=$instal_cores
+      cores=$mainserve_cores
       boot='-kernel 9pc* -initrd plan9.ini -no-reboot'
       ;;
-   solo)
-      mac=$fsserve_MAC
-      ram=$fsserve_ram
-      disk=$fsserve_disk
-      cores=$fsserve_cores
-      ;;
-   fs)
-      mac=$fsserve_MAC
-      ram=$fsserve_ram
-      disk=$fsserve_disk
-      cores=$fsserve_cores
+   main)
+      mac=$mainserve_MAC
+      ram=$mainserve_ram
+      disk=$mainserve_disk
+      cores=$mainserve_cores
       ;;
    auth)
       mac=$authserve_MAC

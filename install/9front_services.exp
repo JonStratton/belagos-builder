@@ -12,13 +12,12 @@ if {[info exists ::env(GLENDA_PASS)]} {
 
 set bootfs "/dev/sd00/fscache"
 
-set runner [lindex $argv 0]
-set type [lindex $argv 1]
+set type [lindex $argv 0]
 sleep 10
 
 # Turn on CPU Server
 set timeout -1
-spawn $runner
+spawn bin/qemu_run.sh main
 if { $disk_pass ne "" } {
    expect "boot*\] "
    send "!rc\r"
@@ -40,7 +39,7 @@ send "fshalt\r"
 expect eof
 
 # Create glenda user?
-spawn $runner
+spawn bin/qemu_run.sh main
 if { $disk_pass ne "" } {
    expect "boot*\] "
    send "!rc\r"
@@ -68,7 +67,7 @@ send "fshalt\r"
 expect eof
 
 # Turn on 9p/fs Serve
-spawn $runner
+spawn bin/qemu_run.sh main
 expect {
    # /dev/fs, in this case, means encryption
    "bootargs is */dev/fs/fscache\]*" {
@@ -101,7 +100,7 @@ send "fshalt\r"
 expect eof
 
 # New user, and final install rc scripts
-spawn $runner
+spawn bin/qemu_run.sh main grid/plan9Scripts.iso
 expect {
    # /dev/fs, in this case, means encryption
    "bootargs is */dev/fs/fscache*\]*" {
@@ -121,35 +120,20 @@ expect {
    }
 }
 
-# Upload to a hard to guess dir for a little more security
-set uploaddir [exec head -c1000 /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c30]
 expect "# "
-send "mkdir /usr/public\r"
+send "mkdir plan9Scripts\r"
 expect "# "
-send "chmod 777 /usr/public\r"
+send "mount <{9660srv -s >\[0=1]} /n/iso /dev/sd01/data\r"
 expect "# "
-send "mkdir /usr/public/upload\r"
+send "cp /n/iso/* plan9Scripts\r"
 expect "# "
-send "chmod 773 /usr/public/upload\r"
+send "chmod 755 plan9Scripts/*\r"
 expect "# "
-send "mkdir /usr/public/upload/$uploaddir\r"
-expect "# "
-send "chmod 773 /usr/public/upload/$uploaddir\r"
-expect "# "
-
-# 9mount and copy scripts
-catch {exec rmdir var/main_public}
-exec mkdir var/main_public
-exec 9mount "tcp!192.168.9.3" var/main_public
-exec cp {*}[glob rc/*.rc] var/main_public/usr/public/upload/$uploaddir/
-sleep 5
-exec 9umount var/main_public
-exec rmdir var/main_public
 
 if {$type eq "grid"} {
-   send "/usr/public/upload/$uploaddir/9front_grid_pxe_server.rc\r"
+   send "plan9Scripts/pxe.rc\r"
 } else {
-   send "/usr/public/upload/$uploaddir/9front_solo.rc\r"
+   send "plan9Scripts/solo.rc\r"
 }
 expect "# "
 send "fshalt\r"
