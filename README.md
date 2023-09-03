@@ -17,23 +17,23 @@ This is a set of tools that creates a small self contained grid of plan9 qemu VM
 
 To build a grid, run the following:
 
-	./install_base.sh
+	install/prep_system.sh
 	sudo reboot
-	./build_grid.sh
+	install/build_vms.sh
 
 You will then be prompted for some information about the VMs to build, such as disk and memory size, and passwords. If you want to just build a single Plan 9 VM, run the above with “solo” as an argument:
 
-	./install_base.sh
+	install/prep_system.sh
 	newgrp vde2-net
-	./build_grid.sh solo
+	install/build_vms.sh solo
 
 You should then be able to boot the VMs with the bin/*_run.sh scripts. So to run our solo VM, execute the following:
 
-	bin/solo_run.sh
+	bin/qemu_run.sh solo
 
 If you want these VMs to run on system boot, run the following:
 
-	./install_build.sh
+	install/migrate_vms_to_system.sh
 
 If you entered a disk encryption password for the VMs, you can input it to the system by running “belagos_client.sh” and then typing “password”, return, and then the password followed by another return:
 
@@ -44,7 +44,7 @@ If you entered a disk encryption password for the VMs, you can input it to the s
 
 You can connect to installed builds with drawterm:
 
-	./install_drawterm.sh
+	aux/install_drawterm.sh
 	/opt/drawterm*/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda
 
 or
@@ -55,22 +55,22 @@ or
 
 To remove the VMs from the system, run the following:
 
-	./install_build.sh uninstall
+	install/migrate_vms_to_system.sh uninstall
 
 To remove the software dependencies and attempt to return the system to its original state, run the following:
 
-	./install_base.sh uninstall
+	install/prep_system.sh uninstall
 
 ## Networking
 
 Optionally, you can also plug your vm network into TOR or Yggdrasil with one of the darknet(IPv6 overlay mesh network) scripts.
 
-	networking/tor.sh install
-	networking/tor.sh outbound
+	aux/tor.sh install
+	aux/tor.sh outbound
 
 This will install TOR software. Route all outbound traffic threw TOR. If you are really cool, you can expose your inbound connections to TOR or Yggdrasil with the following:
 
-	networking/tor.sh inbound
+	aux/tor.sh inbound
 
 If it was plugged into Yggdrasil, and the needed ports were exposed; you can connect via drawterm:
 

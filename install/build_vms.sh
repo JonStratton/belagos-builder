@@ -16,8 +16,7 @@ if [ $1 ]; then
    type=$1
 fi
 
-[ ! -d var ] && mkdir var
-[ ! -d bin ] && mkdir bin
+[ ! -d grid ] && mkdir grid
 
 # Toggle on will prompt for passwords on boot
 secure_boot=$2
@@ -90,7 +89,6 @@ fi
 ################
 # Download ISO #
 ################
-   # TODO, replace with torrent to avoid angering 9front
 
 if [ ! -f $local_iso ]; then
    remote_iso=`wget -O - http://9front.org/iso/ 2>/dev/null | grep ".$iso_arch.iso.gz<" | cut -d'"' -f4`
@@ -98,26 +96,62 @@ if [ ! -f $local_iso ]; then
    gunzip $local_iso.gz
 fi
 
+###############
+# Make env.sh #
+###############
+	# For use with qemu_run.sh
+
+if [ $type = 'grid' ]; then
+   echo "type='grid'
+install_ip='192.168.9.3'
+install_ip6='fdfc::5054:ff:fe00:ee0'
+fsserve_ip='192.168.9.3'
+fsserve_ip6='fdfc::5054:ff:fe00:ee03'
+authserve_ip='192.168.9.4'
+authserve_ip6='fdfc::5054:ff:fe00:ee04'
+cpuserve_ip='192.168.9.5'
+cpuserve_ip6='fdfc::5054:ff:fe00:ee05'"> grid/env.sh
+else
+   echo "type='solo'
+install_ip='192.168.9.3'
+install_ip6='fdfc::5054:ff:fe00:ee0'
+fsserve_ip='192.168.9.3'
+fsserve_ip6='fdfc::5054:ff:fe00:ee03'
+authserve_ip='192.168.9.3'
+authserve_ip6='fdfc::5054:ff:fe00:ee03'
+cpuserve_ip='192.168.9.3'
+cpuserve_ip6='fdfc::5054:ff:fe00:ee03'"> grid/env.sh
+fi
+
+echo "qemu_arch='$qemu_arch'
+secure_boot=$secure_boot
+install_MAC='52:54:00:00:EE:03'
+install_ram='$main_core'
+install_disk='grid/9front_install.img'
+install_cores='1'
+fsserve_MAC='52:54:00:00:EE:03'
+fsserve_ram='$main_core'
+fsserve_disk='grid/9front_main.img'
+fsserve_cores='1'
+authserve_MAC='52:54:00:00:EE:04'
+authserve_ram='$authserve_core'
+authserve_disk='grid/9front_authserve.img'
+authserve_cores='1'
+cpuserve_MAC='52:54:00:00:EE:05'
+cpuserve_ram='$cpuserve_core'
+cpuserve_disk='grid/9front_cpuserve.img'
+cpuserve_cores='4'
+" >> grid/env.sh
+
+chmod 755 grid/env.sh
+
 ################
 # Base Install #
 ################
    # This will be converted to our fsserve
 
-mk_run_sh()
-{
-echo "#!/bin/sh
-kvm=''
-if [ \`cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l\` -ge 1 ]; then
-   kvm='-cpu host -enable-kvm'
-fi" > $1
-chmod a+x $1
-}
-
-mk_run_sh "bin/base_run.sh"
-echo "qemu-system-$qemu_arch \$kvm -m $main_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=var/9front_base.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/base_run.sh
-
 # Run base installer directly
-if [ ! -f var/9front_base.img ]; then
+if [ ! -f grid/9front_install.img ]; then
    # Pull the kern and init out, so we can boot in console mode
    7z e $local_iso cfg/plan9.ini -aoa
    7z e $local_iso $iso_arch/9pc* -aoa
@@ -125,31 +159,34 @@ if [ ! -f var/9front_base.img ]; then
    chmod 644 ./plan9.ini
    echo "console=0\n*acpi=1" >> ./plan9.ini
 
-   qemu-img create -f qcow2 var/9front_base.img $main_disk_gb
-   build_grid/9front_base.exp bin/base_run.sh $local_iso
+   qemu-img create -f qcow2 grid/9front_install.img $main_disk_gb
+   echo "install/9front_base.exp ./qemu_run.sh install $local_iso"
+   #install/9front_base.exp ./qemu_run.sh install $local_iso
 
-   rm ./plan9.ini
-   rm ./9pc*
+   #rm ./plan9.ini
+   #rm ./9pc*
 fi
+exit 0;
 
 ########
 # Main #
 ########
    # For solo servers with services exposed, or a file server in a grid
 
-rm var/*_run_in
-rm var/*_run_out
+rm grid/*_run_in
+rm grid/*_run_out
 
-mkfifo -m 622 var/main_run_in
-mkfifo -m 644 var/main_run_out
-mk_run_sh "bin/main_run.sh"
-echo "qemu-system-$qemu_arch \$kvm -m $main_core -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=var/9front_main.img -device scsi-hd,drive=vd0 -nographic \$*" >> bin/main_run.sh
+# Package scripts in an ISO
+mkisofs -o grid/plan9Scripts.iso ./plan9
 
-if [ ! -f var/9front_main.img ]; then
-   cp var/9front_base.img var/9front_main.img
+mkfifo -m 622 grid/main_run_in
+mkfifo -m 644 grid/main_run_out
+
+if [ ! -f grid/9front_main.img ]; then
+   cp grid/9front_install.img grid/9front_main.img
 
    # Expose the services
-   build_grid/9front_services.exp bin/main_run.sh $type
+   install/9front_services.exp "./qemu_run.sh fs" $type
 fi
 
 ###################
@@ -160,60 +197,35 @@ if [ $type = 'grid' ]; then
    bin/boot_wait.sh bin/main_run.sh
 
    # AUTHSERVE
-   mkfifo -m 622 var/authserve_run_in
-   mkfifo -m 644 var/authserve_run_out
+   mkfifo -m 622 grid/authserve_run_in
+   mkfifo -m 644 grid/authserve_run_out
    mk_run_sh "bin/authserve_run.sh"
    if [ ! $secure_boot ]; then
-      echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=var/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/authserve_run.sh
+      echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/authserve_run.sh
    else
       echo "qemu-system-$qemu_arch \$kvm -m $authserve_core -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic \$*" >> bin/authserve_run.sh
    fi
 
    if [ ! $secure_boot ]; then
-      qemu-img create -f qcow2 var/9front_authserve.img 1M
-      build_grid/9front_grid_pxe_client_nvram.exp bin/authserve_run.sh
+      qemu-img create -f qcow2 grid/9front_authserve.img 1M
+      install/9front_grid_pxe_client_nvram.exp bin/authserve_run.sh
    fi
-   build_grid/9front_authserver_changeuser.exp bin/authserve_run.sh
+   install/9front_authserver_changeuser.exp bin/authserve_run.sh
 
    bin/boot_wait.sh bin/authserve_run.sh
 
    # CPUSERVE
-   mkfifo -m 622 var/cpuserve_run_in
-   mkfifo -m 644 var/cpuserve_run_out
+   mkfifo -m 622 grid/cpuserve_run_in
+   mkfifo -m 644 grid/cpuserve_run_out
    mk_run_sh "bin/cpuserve_run.sh"
    if [ ! $secure_boot ]; then
-      echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=var/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/cpuserve_run.sh
-      qemu-img create -f qcow2 var/9front_cpuserve.img 1M
-      build_grid/9front_grid_pxe_client_nvram.exp bin/cpuserve_run.sh
+      echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic \$*" >> bin/cpuserve_run.sh
+      qemu-img create -f qcow2 grid/9front_cpuserve.img 1M
+      install/9front_grid_pxe_client_nvram.exp bin/cpuserve_run.sh
    else
       echo "qemu-system-$qemu_arch \$kvm -smp 4 -m $cpuserve_core -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic \$*" >> bin/cpuserve_run.sh
    fi
 fi
-
-#######
-# Env #
-#######
-
-if [ $type = 'grid' ]; then
-   echo "type='grid'
-fsserve='192.168.9.3'
-fsserve6='fdfc::5054:ff:fe00:ee03'
-authserve='192.168.9.4'
-authserve6='fdfc::5054:ff:fe00:ee04'
-cpuserve='192.168.9.5'
-cpuserve6='fdfc::5054:ff:fe00:ee05'"> var/env.sh
-else
-   echo "type='solo'
-fsserve='192.168.9.3'
-fsserve6='fdfc::5054:ff:fe00:ee03'
-authserve='192.168.9.3'
-authserve6='fdfc::5054:ff:fe00:ee03'
-cpuserve='192.168.9.3'
-cpuserve6='fdfc::5054:ff:fe00:ee03'"> var/env.sh
-fi
-
-echo "secure_boot=$secure_boot" >> var/env.sh
-chmod 755 var/env.sh
 
 ########################
 # Turn down everything #
