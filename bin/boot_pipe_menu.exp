@@ -132,6 +132,10 @@ expect {
       send "$glenda_pass\r"
       exp_continue
    }
+   "enable legacy p9sk1*" {
+      send "\r"
+      exp_continue
+   }
    # Boot normally
    "bootargs is */dev/sd00/fscache*\]*" {
       send "\r"
@@ -140,9 +144,6 @@ expect {
       send "\r"
    }
    "cpuserve# " {
-      send "\r"
-   }
-   "enable legacy p9sk1*" {
       send "\r"
    }
 }

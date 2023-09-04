@@ -5,7 +5,7 @@
 install()
 {
 script_loc=`dirname $0`
-. $script_loc/var/env.sh
+. $script_loc/../grid/env.sh
 
 # Create local belagos, the user that will run the vms
 sudo useradd belagos -m -s /bin/false --groups vde2-net
@@ -20,7 +20,7 @@ sudo mkdir /opt/belagos/
 sudo mkdir /opt/belagos/bin/
 sudo cp bin/* /opt/belagos/bin/
 sudo mkdir /opt/belagos/grid/
-sudo cp var/env.sh /opt/belagos/grid/
+sudo cp grid/env.sh /opt/belagos/grid/
 sudo mkfifo -m 622 /opt/belagos/grid/main_in
 sudo mkfifo -m 644 /opt/belagos/grid/main_out
 
