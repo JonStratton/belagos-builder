@@ -1,4 +1,5 @@
 #!/usr/bin/expect -f
+# This expect script controls the boot of a VM and exposes some options via the “belegos_client.sh” script via named pipes. Mostly, if it needs a password, it will stop and wait for the user to unput it with the client script. 
 
 set disk_pass ""
 set glenda_pass ""

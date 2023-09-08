@@ -1,4 +1,5 @@
 #!/usr/bin/expect -f
+# This expect script is basically a catch all post install script. Mostly it enables the cpu service (so we can connect to it), hard codes the boot filesystem so boot isn't interrupted, copies our plan9 scripts via mounted ISO, and executes pxe.rc or solo.rc depending on if a grid or solo server is being built. Realisitcally, this could be added to 9front_installer.exp. However, as the initial install takes a while, splitting this script from the base installer allows me to retest the grid creation outside of the install.
 
 set disk_pass ""
 if {[info exists ::env(DISK_PASS)]} {

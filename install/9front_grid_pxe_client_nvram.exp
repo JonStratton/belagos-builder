@@ -1,4 +1,5 @@
 #!/usr/bin/expect -f
+# This expect script initializes a small nvram partition for use for the auth and cpu servers inside of the grid. This nvram is used in the grid to allow the auth and cpu servers to boot without being prompted for Glenda's password. Its not used in “secure mode” as this nvram caches Glenda's creds (I assume). It creates this nvram with the nvram.rc script thats previously copied to the plan 9 filesystem during the install.
 
 set glenda_pass ''
 if {[info exists ::env(GLENDA_PASS)]} {

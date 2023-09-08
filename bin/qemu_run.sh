@@ -1,4 +1,7 @@
 #!/bin/sh
+# This script takes a server type (install|main|auth|cpu) and will attempt run it.
+
+proj_root=`dirname $0`'/..'
 
 kvm=''
 qemu_arch=''
@@ -9,7 +12,7 @@ cores=1
 iso=''
 boot=''
 
-. grid/env.sh
+. $proj_root/grid/env.sh
 
 case $1 in
    install)

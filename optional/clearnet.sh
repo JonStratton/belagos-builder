@@ -1,5 +1,7 @@
 #!/bin/sh
-script_loc=`dirname $0`
+# This script exposes the internal vde network ports on the host. You should do this if you want other people on your network to connect to your grid, but your too boring to use tor or yggdrasil. 
+
+proj_root=`dirname $0`'/..'
 
 outbound()
 {
@@ -31,7 +33,7 @@ inbound()
    fi
 
    # iptables commands for direct connections?
-   . $script_loc/../var/env.sh
+   . $proj_root/grid/env.sh
    sudo sysctl -w net.ipv4.ip_forward=1
    sudo iptables -t nat -I PREROUTING -p tcp --dport 564 -j DNAT --to-destination $fsserve:564
    sudo iptables -t nat -I PREROUTING -p tcp --dport 567 -j DNAT --to-destination $authserve:567

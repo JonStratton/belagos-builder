@@ -1,5 +1,8 @@
 #!/bin/sh
-# boot_wait.sh is back from the grave. undead undead undead
+# This script will attempt to run a VM in the background (via “boot_pipe_menu.exp” and nohup) and report “Success” if it detects that its done booting.
+
+proj_root=`dirname $0`'/..'
+cd $proj_root
 
 sleep='sleep 10'
 lastline=''
@@ -10,8 +13,7 @@ do
    chmod 600 /tmp/boot_wait_$USER.txt
 
    # Run Process in BG
-   echo bin/boot_pipe_menu.exp $process
-   nohup bin/boot_pipe_menu.exp $process > /tmp/boot_wait_$USER.txt 2>&1 &
+   nohup ./bin/boot_pipe_menu.exp $process > /tmp/boot_wait_$USER.txt 2>&1 &
 
    success=0
    while [ $success -eq 0 ]; do

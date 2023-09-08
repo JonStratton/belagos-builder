@@ -1,4 +1,5 @@
 #!/bin/rc
+# This rc script just sets some networking configs and enables pxe. It will the create configurations for the authserve and cpuserve.
 
 # Set up base networking
 echo 'database=

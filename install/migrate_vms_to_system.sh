@@ -1,11 +1,14 @@
 #!/bin/sh
+# This script takes a previous created grid or solo server (from build_vms.sh) and installs it generically on the system. It does this by coping the needed files to “/opt/”, created a “belagos” service user, and created a SystemD service to start on boot.
+
 ###########
 # Install #
 ###########
 install()
 {
-script_loc=`dirname $0`
-. $script_loc/../grid/env.sh
+proj_root=`dirname $0`'/..'
+cd $proj_root
+. ./grid/env.sh
 
 # Create local belagos, the user that will run the vms
 sudo useradd belagos -m -s /bin/false --groups vde2-net

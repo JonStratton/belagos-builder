@@ -1,4 +1,5 @@
 #!/bin/rc
+# This rc script just formats the nvram. Its used by “install/9front_grid_pxe_client_nvram.exp”.
 
 disk/mbr /dev/sd00/data
 disk/fdisk -aw /dev/sd00/data

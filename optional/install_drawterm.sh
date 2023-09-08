@@ -1,4 +1,5 @@
 #!/bin/sh
+# This script downloads and installs 9fronts version of drawterm.
 
 ###########
 # Install #

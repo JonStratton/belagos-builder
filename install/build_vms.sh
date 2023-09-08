@@ -1,4 +1,11 @@
 #!/bin/sh
+# This script attempts to build a 9front grid or solo server. It gets some VM sizing information from the user, creates some disk images, and will run some Expect scripts first against the 9front installer, and then against the VMs. Some funking things this script does:
+# It will pull some files out of the plan9 ISO so it can patch the init process used by the 9front ISO for console mode. This is done because using qemu in text mode creates issues with terminal control characters breaking the Expect scripts.
+# It packages up some RC scripts in an ISO for copying to the 9front system after the install. 
+# In cases where a grid is built, it will run VMs in the background as, for example, the auth server needs the fsserver to be running as it net boots off of it.
+
+proj_root=`dirname $0`'/..'
+cd $proj_root
 
 # Arch for ISO and qemu
 iso_arch='386'

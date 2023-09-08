@@ -1,4 +1,5 @@
 #!/bin/rc
+# This rc script just installs some optional packages. Its currently unused. 
 
 9fs 9front
 

@@ -1,5 +1,5 @@
 #!/usr/bin/expect -f
-# Installing 9front usually just pounding return unless there is "no default". Then you choose the first item. If you see ">>>", just type w\rq\r
+# This expect script installs 9front to the disk image created by the build_vms.sh script. The normal plan 9 install process is usually just hitting return a bunch of times (unless you see “>>>”, then you type w\rq\r). However, this script hard codes IPs for our internal network. It will also do disk encryption if secure mode is turned on. 
 
 set disk_pass ""
 if {[info exists ::env(DISK_PASS)]} {

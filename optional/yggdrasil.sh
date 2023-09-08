@@ -1,5 +1,7 @@
 #!/bin/sh
-script_loc=`dirname $0`
+# This script exposes the grid inside of the vde network to yggdrasil; an overlay mesh network. This will allow people online to connect to your grid with yggdrasil.
+
+proj_root=`dirname $0`'/..'
 
 outbound()
 {
@@ -32,7 +34,7 @@ inbound()
    fi
 
    # fs: 564, auth: 567, cpu: 17019 and 17029
-   . $script_loc/../var/env.sh
+   . $proj_root/grid/env.sh
    sudo ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [$fsserve6]:564
    sudo ip6tables -t nat -A PREROUTING -p tcp --dport 567 -j DNAT --to-destination [$authserve6]:567
    sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17019 -j DNAT --to-destination [$cpuserve6]:17019
