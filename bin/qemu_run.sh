@@ -2,6 +2,7 @@
 # This script takes a server type (install|main|auth|cpu) and will attempt run it.
 
 proj_root=`dirname $0`'/..'
+cd $proj_root
 
 kvm=''
 qemu_arch=''
@@ -12,7 +13,7 @@ cores=1
 iso=''
 boot=''
 
-. $proj_root/grid/env.sh
+. ./grid/env.sh
 
 case $1 in
    install)
@@ -43,7 +44,7 @@ case $1 in
       boot='-boot n'
       ;;
    *)
-      echo "$0 install|fs|auth|cpu (iso)"
+      echo "$0 install|main|auth|cpu (iso)"
       exit 1;
       ;;
 esac
