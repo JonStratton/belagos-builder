@@ -9,7 +9,7 @@ outbound()
       install
    fi
 
-   sudo cp networking/vde_find_internet.sh /usr/local/sbin/
+   sudo cp $proj_root/optional/vde_find_internet.sh /usr/local/sbin/
 
    # Keep checking interfaces until one has an internet connection. Than plug it into vde
    sudo sh -c '( echo "[Unit]
@@ -32,13 +32,17 @@ inbound()
       install
    fi
 
+   if [ ! -f "/etc/iptables/rules.v4_back" ]; then
+          sudo cp /etc/iptables/rules.v4 /etc/iptables/rules.v4_back
+   fi
+
    # iptables commands for direct connections?
    . $proj_root/grid/env.sh
    sudo sysctl -w net.ipv4.ip_forward=1
-   sudo iptables -t nat -I PREROUTING -p tcp --dport 564 -j DNAT --to-destination $fsserve:564
-   sudo iptables -t nat -I PREROUTING -p tcp --dport 567 -j DNAT --to-destination $authserve:567
-   sudo iptables -t nat -I PREROUTING -p tcp --dport 17019 -j DNAT --to-destination $cpuserve:17019
-   sudo iptables -t nat -I PREROUTING -p tcp --dport 17020 -j DNAT --to-destination $cpuserve:17020
+   sudo iptables -t nat -I PREROUTING -p tcp --dport 564 -j DNAT --to-destination $mainserve_ip:564
+   sudo iptables -t nat -I PREROUTING -p tcp --dport 567 -j DNAT --to-destination $authserve_ip:567
+   sudo iptables -t nat -I PREROUTING -p tcp --dport 17019 -j DNAT --to-destination $cpuserve_ip:17019
+   sudo iptables -t nat -I PREROUTING -p tcp --dport 17020 -j DNAT --to-destination $cpuserve_ip:17020
    sudo sh -c '( iptables-save > /etc/iptables/rules.v4 )'
 }
 

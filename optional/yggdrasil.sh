@@ -35,10 +35,10 @@ inbound()
 
    # fs: 564, auth: 567, cpu: 17019 and 17029
    . $proj_root/grid/env.sh
-   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [$fsserve6]:564
-   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 567 -j DNAT --to-destination [$authserve6]:567
-   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17019 -j DNAT --to-destination [$cpuserve6]:17019
-   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17020 -j DNAT --to-destination [$cpuserve6]:17020
+   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [$mainserve_ip6]:564
+   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 567 -j DNAT --to-destination [$authserve_ip6]:567
+   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17019 -j DNAT --to-destination [$cpuserve_ip6]:17019
+   sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17020 -j DNAT --to-destination [$cpuserve_ip6]:17020
    sudo sh -c '( ip6tables-save > /etc/iptables/rules.v6 )'
 }
 
