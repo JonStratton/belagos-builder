@@ -1,21 +1,15 @@
 #!/usr/bin/expect -f
+# This expect script recreates the Glenda user on an auth server. Its only used on a grid.
 
 set glenda_pass ""
 if {[info exists ::env(GLENDA_PASS)]} {
    set glenda_pass $::env(GLENDA_PASS)
 }
 
-set user_pass ""
-if {[info exists ::env(USER_PASS)]} {
-   set user_pass $::env(USER_PASS)
-}
-
-set runner [lindex $argv 0]
-
 set timeout -1
 
 # Create Users
-spawn $runner
+spawn bin/qemu_run.sh auth
 expect {
    "authid: " {
       send "glenda\r"
@@ -31,9 +25,6 @@ expect {
       send "$glenda_pass\r"
       expect "Confirm password: "
       send "$glenda_pass\r"
-
-      #expect "*# "
-      #send "fshalt\r"
    }
    "authserve# " {
       send "\r"
@@ -60,31 +51,6 @@ expect "U*email address:"
 send "\r"
 expect "Spon*email address:"
 send "\r"
-
-if { $user_pass ne "" } {
-   set user $::env(USER)
-   expect "authserve# "
-   send "auth/changeuser $user\r"
-   expect "Password:"
-   send "$user_pass\r"
-   expect "Confirm password:"
-   send "$user_pass\r"
-   expect "assign*POP*:"
-   send "n\r"
-   expect "Expiration*:"
-   send "\r"
-   expect "Post*:"
-   send "\r"
-   expect "*name:"
-   send "\r"
-   expect "Department*:"
-   send "\r"
-   expect "U*email address:"
-   send "\r"
-   expect "Spon*email address:"
-   send "\r"
-}
-
 expect "authserve# "
 send "fshalt\r"
 expect eof

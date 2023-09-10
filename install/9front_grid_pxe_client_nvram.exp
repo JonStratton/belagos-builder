@@ -1,14 +1,15 @@
 #!/usr/bin/expect -f
+# This expect script initializes a small nvram partition for use for the auth and cpu servers inside of the grid. This nvram is used in the grid to allow the auth and cpu servers to boot without being prompted for Glenda's password. Its not used in “secure mode” as this nvram caches Glenda's creds (I assume). It creates this nvram with the nvram.rc script thats previously copied to the plan 9 filesystem during the install.
 
 set glenda_pass ''
 if {[info exists ::env(GLENDA_PASS)]} {
    set glenda_pass $::env(GLENDA_PASS)
 }
 
-set runner [lindex $argv 0]
+set type [lindex $argv 0]
 
 set timeout -1
-spawn $runner
+spawn bin/qemu_run.sh $type
 expect {
     "authid: " {
       send "glenda\r"
@@ -36,7 +37,7 @@ expect {
 
 # nvram
 expect "# "
-send "/usr/public/upload/*/small_nvram.rc\r"
+send "plan9Scripts/nvram.rc\r"
 
 expect "# "
 send "auth/wrkey\r"

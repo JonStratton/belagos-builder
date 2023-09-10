@@ -1,4 +1,5 @@
 #!/bin/sh
+# This script attempts to find a path to the internet, and uses IP tables to allow the vde network to connect to it. Its intended to be used with mesh-micro.sh.
 # Takes an interface from a config file. If nothing, just try each of them
 
 internet_interface=

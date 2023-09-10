@@ -1,5 +1,7 @@
 #!/bin/sh
-script_loc=`dirname $0`
+# This script exposes the grid inside of the vde network to tor hidden services. This will allow people online to connect to your grid with tor.
+
+proj_root=`dirname $0`'/..'
 
 outbound()
 {
@@ -33,7 +35,7 @@ inbound()
       install
    fi
 
-   . $script_loc/../var/env.sh
+   . $proj_root/grid/env.sh
    sudo sh -c "( echo \"
 HiddenServiceDir /var/lib/tor/hidden_service/
 HiddenServicePort 564 $fsserve:564

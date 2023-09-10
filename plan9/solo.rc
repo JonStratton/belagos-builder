@@ -1,4 +1,5 @@
 #!/bin/rc
+# This rc script just sets some networking configs for a solo host.
 
 # Set up base networking
 echo 'database=

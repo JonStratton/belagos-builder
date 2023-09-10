@@ -1,4 +1,5 @@
 #!/bin/sh
+# This script attempts to clear the funky network rules after using clearnet.sh, tor.sh, or yggdrasil.sh. It does this by restoring and clearing IP tables.
 
 if [ -f "/etc/iptables/rules.v4_back" ]; then
    sudo mv /etc/iptables/rules.v4_back /etc/iptables/rules.v4

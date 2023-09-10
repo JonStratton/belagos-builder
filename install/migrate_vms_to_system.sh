@@ -1,11 +1,14 @@
 #!/bin/sh
+# This script takes a previous created grid or solo server (from build_vms.sh) and installs it generically on the system. It does this by coping the needed files to “/opt/”, created a “belagos” service user, and created a SystemD service to start on boot.
+
 ###########
 # Install #
 ###########
 install()
 {
-script_loc=`dirname $0`
-. $script_loc/var/env.sh
+proj_root=`dirname $0`'/..'
+cd $proj_root
+. ./grid/env.sh
 
 # Create local belagos, the user that will run the vms
 sudo useradd belagos -m -s /bin/false --groups vde2-net
@@ -19,29 +22,29 @@ fi
 sudo mkdir /opt/belagos/
 sudo mkdir /opt/belagos/bin/
 sudo cp bin/* /opt/belagos/bin/
-sudo mkdir /opt/belagos/var/
-sudo cp var/env.sh /opt/belagos/var/
-sudo mkfifo -m 622 /opt/belagos/var/main_run_in
-sudo mkfifo -m 644 /opt/belagos/var/main_run_out
+sudo mkdir /opt/belagos/grid/
+sudo cp grid/env.sh /opt/belagos/grid/
+sudo mkfifo -m 622 /opt/belagos/grid/main_in
+sudo mkfifo -m 644 /opt/belagos/grid/main_out
 
 if [ $type = 'grid' ]; then
-   sudo mkfifo -m 622 /opt/belagos/var/authserve_run_in
-   sudo mkfifo -m 644 /opt/belagos/var/authserve_run_out
-   sudo mkfifo -m 622 /opt/belagos/var/cpuserve_run_in
-   sudo mkfifo -m 644 /opt/belagos/var/cpuserve_run_out
+   sudo mkfifo -m 622 /opt/belagos/grid/auth_in
+   sudo mkfifo -m 644 /opt/belagos/grid/auth_out
+   sudo mkfifo -m 622 /opt/belagos/grid/cpu_in
+   sudo mkfifo -m 644 /opt/belagos/grid/cpu_out
 fi
 
-sudo mv var/9front_main.img /opt/belagos/var/
+sudo mv grid/9front_main.img /opt/belagos/grid/
 
-if [ -f var/9front_authserve.img ]; then
-   sudo mv var/9front_authserve.img /opt/belagos/var/
+if [ -f grid/9front_authserve.img ]; then
+   sudo mv grid/9front_authserve.img /opt/belagos/grid/
 fi
 
-if [ -f var/9front_cpuserve.img ]; then
-   sudo mv var/9front_cpuserve.img /opt/belagos/var/
+if [ -f grid/9front_cpuserve.img ]; then
+   sudo mv grid/9front_cpuserve.img /opt/belagos/grid/
 fi
 
-sudo chown -R belagos:belagos /opt/belagos/var/*
+sudo chown -R belagos:belagos /opt/belagos/grid/*
 
 if [ $type = 'grid' ]; then
    sudo sh -c '( echo "[Unit]
@@ -52,7 +55,7 @@ Type=forking
 TimeoutStartSec=600
 User=belagos
 WorkingDirectory=/opt/belagos
-ExecStart=/opt/belagos/bin/boot_wait.sh bin/main_run.sh bin/authserve_run.sh bin/cpuserve_run.sh
+ExecStart=/opt/belagos/bin/boot_wait.sh main auth cpu
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/belagos.service )'
 else
@@ -64,7 +67,7 @@ Type=forking
 TimeoutStartSec=600
 User=belagos
 WorkingDirectory=/opt/belagos
-ExecStart=/opt/belagos/bin/boot_wait.sh bin/main_run.sh
+ExecStart=/opt/belagos/bin/boot_wait.sh main
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/belagos.service )'
 fi
