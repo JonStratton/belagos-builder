@@ -43,13 +43,12 @@ If you entered a disk encryption password for the VMs, you can input it to the s
 	MyDiskPassword1!
 
 You can connect to installed builds with drawterm:
-
-	aux/install_drawterm.sh
-	/opt/drawterm*/drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda
+	sudo apt-get install drawterm-9front
+	drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda
 
 or
 
-	/opt/drawterm*/drawterm -h 192.168.9.5 -a 192.168.9.4 -u glenda
+	drawterm -h 192.168.9.5 -a 192.168.9.4 -u glenda
 
 ### Uninstall
 

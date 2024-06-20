@@ -1,7 +1,7 @@
 #!/bin/sh
 # This script installs some needed packages for the project, as well as creates the vde network to be used by the grid or solo server. Its probably best to reboot after running this script. However, thats only really for the “vde2-net” group the running user is added too. You might be able to get by without this by running something like “newgrp  vde2-net”.
 
-package_list="iptables-persistent qemu-system-x86 vde2 uml-utilities expect p7zip-full"
+package_list="iptables-persistent qemu-system-x86 vde2 uml-utilities expect p7zip-full genisoimage"
 
 # Add KVM if possible
 if [ `cat /proc/cpuinfo | grep 'vmx\|svm' | wc -l` -ge 1 ]; then

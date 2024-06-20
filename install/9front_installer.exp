@@ -82,10 +82,6 @@ expect "Ream the filesystem? *:*"
 send "\r"
 expect "Task to do *:*"
 send "\r"
-expect "Distribution is from *:*"
-send "\r"
-expect "Task to do *:*"
-send "\r"
 expect "Configuration method *:*"
 
 ## DHCP
