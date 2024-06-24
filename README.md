@@ -29,7 +29,7 @@ You will then be prompted for some information about the VMs to build, such as d
 
 You should then be able to boot the VMs with the bin/*_run.sh scripts. So to run our solo VM, execute the following:
 
-	bin/qemu_run.sh solo
+	bin/qemu_run.sh main
 
 If you want these VMs to run on system boot, run the following:
 
@@ -42,11 +42,11 @@ If you entered a disk encryption password for the VMs, you can input it to the s
 	password
 	MyDiskPassword1!
 
-You can connect to installed builds with drawterm:
+You can connect to installed builds with drawterm(solo):
 	sudo apt-get install drawterm-9front
 	drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda
 
-or
+or, to connect to your grid:
 
 	drawterm -h 192.168.9.5 -a 192.168.9.4 -u glenda
 
@@ -73,7 +73,7 @@ This will install TOR software. Route all outbound traffic threw TOR. If you are
 
 If it was plugged into Yggdrasil, and the needed ports were exposed; you can connect via drawterm:
 
-	/opt/drawterm/drawterm -h 200:aaaa:bbbb:cccc:dddd:eeee:ffff:1111
+	drawterm -h 200:aaaa:bbbb:cccc:dddd:eeee:ffff:1111
 
 ## Scripts
 ### Install
@@ -89,7 +89,7 @@ These scripts prepare the system and build the grid.
 ### Generic Scripts
 These are needed to run the grid.
  - bin/belagos_client.sh - This script acts as a way to interact with the hosts on the backend, mostly around the boot process.
- - bin/boot_pipe_menu.exp - This expect script controls the boot of a VM and exposes some options via the “belegos_client.sh” script via named pipes. 
+ - bin/boot_pipe_menu.exp - This expect script controls the boot of a VM and exposes some options via the “belagos_client.sh” script via named pipes. 
  - bin/boot_wait.sh - This script will attempt to run a VM in the background (via “boot_pipe_menu.exp” and nohup) and report “Success” if it detects that its done booting.
  - bin/qemu_run.sh - This script takes a server type (install|main|auth|cpu) and will attempt run it.
 
@@ -103,7 +103,6 @@ These are script that will be run on the grid, mostly as part of the install pro
 ### Optional Features
 These are optional features. Mostly around plugging the grid into different networks. 
  - optional/mesh-micro.sh - This script is a wrapper around batctl for optional wireless mesh networking.
- - optional/install_drawterm.sh - This script downloads and installs 9fronts version of drawterm. 
  - optional/clearnet.sh - This script exposes the internal vde network ports on the host.
  - optional/restore.sh - This script attempts to clear the funky network rules after using clearnet.sh, tor.sh, or yggdrasil.sh. 
  - optional/tor.sh - This script exposes the grid inside of the vde network to tor hidden services. 
