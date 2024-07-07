@@ -19,30 +19,16 @@ To build a grid, run the following:
 
 	install/prep_system.sh
 	sudo reboot
-	install/build_vms.sh
+	./BelagosBuildVM.py
 
-You will then be prompted for some information about the VMs to build, such as disk and memory size, and passwords. If you want to just build a single Plan 9 VM, run the above with “solo” as an argument:
-
-	install/prep_system.sh
-	newgrp vde2-net
-	install/build_vms.sh solo
-
-You should then be able to boot the VMs with the bin/*_run.sh scripts. So to run our solo VM, execute the following:
-
-	bin/qemu_run.sh main
+You will then be prompted for some information about the VMs to build, such as disk and memory size, and passwords. You may be able to get around rebooting between running the prep_system.sh script and the Build VM Script by running "newgrp vde2-net" instead. You should then be able to boot the VMs by running "./BelagosService.py".
 
 If you want these VMs to run on system boot, run the following:
 
 	install/migrate_vms_to_system.sh
 
-If you entered a disk encryption password for the VMs, you can input it to the system by running “belagos_client.sh” and then typing “password”, return, and then the password followed by another return:
-
-	/opt/belagos/bin/belagos_client.sh
-	...
-	password
-	MyDiskPassword1!
-
 You can connect to installed builds with drawterm(solo):
+
 	sudo apt-get install drawterm-9front
 	drawterm -h 192.168.9.3 -a 192.168.9.3 -u glenda
 
@@ -78,20 +64,10 @@ If it was plugged into Yggdrasil, and the needed ports were exposed; you can con
 ## Scripts
 ### Install
 These scripts prepare the system and build the grid.
- - install/9front_authserver_changeuser.exp - This expect script recreates the Glenda user on an auth server.
- - install/9front_grid_pxe_client_nvram.exp - This expect script initializes a small nvram partition for use for the auth and cpu servers inside of the grid. 
- - install/9front_installer.exp - This expect script installs 9front to the disk image created by the build_vms.sh script. 
- - install/9front_services.exp - This expect script is basically a catch all post install script. Mostly it enables the cpu service (so we can connect to it), hard codes the boot filesystem so boot isn't interrupted, copies our plan9 scripts via mounted ISO, and executes pxe.rc or solo.rc depending on if a grid or solo server is being built. 
- - install/build_vms.sh - This script attempts to build a 9front grid or solo server. 
+ - BelagosBuildVM.py - This script attempts to build a 9front grid or solo server.
+ - BelagosService.py - This script controls the VMs via a web service.
  - install/migrate_vms_to_system.sh - This script takes a previous created grid or solo server (from build_vms.sh) and installs it generically on the system.
  - install/prep_system.sh - This script installs some needed packages for the project, as well as creates the vde network to be used by the grid or solo server. 
-
-### Generic Scripts
-These are needed to run the grid.
- - bin/belagos_client.sh - This script acts as a way to interact with the hosts on the backend, mostly around the boot process.
- - bin/boot_pipe_menu.exp - This expect script controls the boot of a VM and exposes some options via the “belagos_client.sh” script via named pipes. 
- - bin/boot_wait.sh - This script will attempt to run a VM in the background (via “boot_pipe_menu.exp” and nohup) and report “Success” if it detects that its done booting.
- - bin/qemu_run.sh - This script takes a server type (install|main|auth|cpu) and will attempt run it.
 
 ### Plan 9 Scripts
 These are script that will be run on the grid, mostly as part of the install process.

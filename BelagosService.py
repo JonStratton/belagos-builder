@@ -8,6 +8,7 @@ CONFIG = ConfigParser()
 CONFIG.read('BelagosService.conf')
 VM_ORDER = CONFIG.get('main', 'order').split()
 WEB_PASSWORD = CONFIG.get('main', 'web_password')
+AUTOSTART = CONFIG.get('main', 'autostart')
 
 # Globals
 app = Flask(__name__)
@@ -33,6 +34,7 @@ def status_http():
    #   return 'Unauthorized', 401
    return STATUS
 
+# TODO, when encrypted, both disk and glenda passwords are needed
 @app.route("/password", methods=['GET', 'POST'])
 def password_http():
    global DISK_PASSWORD
@@ -58,11 +60,18 @@ def halt_http():
    #if not session.get('logged_in'):
    #   return 'Unauthorized', 401
    for vm in reversed(VM_ORDER):
-      bl.halt_vm(VM_TO_EXP[vm])
+      if VM_TO_EXP[vm].isalive():
+         bl.halt_vm(VM_TO_EXP[vm])
    STATUS = 'halted';
    return STATUS
 
 if __name__ == '__main__':
+   if AUTOSTART:
+      for vm in VM_ORDER:
+         command = CONFIG.get(vm, 'command')
+         VM_TO_EXP[vm] = bl.boot_vm(command)
+      STATUS = 'booted';
+
    app.secret_key = os.urandom(12)
    app.run()
 

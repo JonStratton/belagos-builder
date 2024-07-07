@@ -16,8 +16,9 @@ sudo usermod -a -G kvm belagos
 # Copy / Move stuff over.
 sudo mkdir /opt/belagos/
 sudo mkdir /opt/belagos/grid/
-sudo cp BelagosService.* /opt/belagos/
+sudo cp BelagosService.py /opt/belagos/
 sudo cp BelagosLib.py /opt/belagos/
+sudo mv BelagosService.conf /opt/belagos/
 sudo mv grid/* /opt/belagos/grid/
 
 if [ -f grid/9front_authserve.img ]; then

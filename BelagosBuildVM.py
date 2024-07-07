@@ -36,7 +36,6 @@ def main():
    subprocess.run(['mkisofs', '-o', SCRIPTS_ISO, './plan9'])
 
    # Service Stuff
-   # TODO, put in solo versus grid to change the final script execution
    bl.base_services_vm(config.get('main_vm', 'command'), glenda_pass, config.get('main', 'type'))
 
    if config.get('main', 'type') == 'grid':
@@ -106,19 +105,17 @@ def get_specs_user(config_file, arch):
    else:
       web_pass = input("Enter password for the Web Control Service: ")
       installType = input("Install type(solo or grid): ")
-      #config['main'] = {'type': installType, 'web_password': web_pass}
       if installType == 'grid':
          main_core = input("RAM for fsserve(MB): ")
          authserve_core = input("RAM for authserve(MB): ")
          cpuserve_core = input("RAM for cpuserve(MB): ")
-         #config['main'] = {'order': 'main_vm auth_vm cpu_vm'}
-         config['main'] = {'order': 'main_vm auth_vm cpu_vm', 'type': installType, 'web_password': web_pass}
+         config['main'] = {'order': 'main_vm auth_vm cpu_vm', 'autostart': 1, 'type': installType, 'web_password': web_pass}
          config['main_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_main.img -device scsi-hd,drive=vd0 -nographic' % (arch, main_core)}
          config['auth_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, authserve_core)}
          config['cpu_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, cpuserve_core)}
       else:
          main_core = input("RAM for install(MB): ")
-         config['main'] = {'order': 'main_vm', 'type': installType, 'web_password': web_pass}
+         config['main'] = {'order': 'main_vm', 'autostart': 1, 'type': installType, 'web_password': web_pass}
          config['main_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_main.img -device scsi-hd,drive=vd0 -nographic' % (arch, main_core)}
    
       # Write the configuration to a file
