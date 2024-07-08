@@ -1,25 +1,45 @@
 #!/usr/bin/env python3
-import pexpect, os, platform, requests, re, subprocess, sys, glob
+import pexpect, os, sys
 
-def boot_vm(command):
-   pexp = pexpect.spawn(command, timeout=None)
+def boot_vm(command, glenda_pass="", disk_pass=""):
+   pexp = pexpect.spawn(command, timeout=None, encoding='utf-8')
+   pexp.logfile = sys.stdout
 
    while True:
-      i = pexp.expect(['\w+# ', 'bootargs is \(tcp, tls, il, local!device\)\[local!/dev/sd00/fscache -a tcp!\*!564\] ', 'bootargs is \(tcp, tls, il, local!device\)\[local!/dev/fs/fscache -a tcp!\*!564\] '])
-      if i==0: # Command line. We are done
+      i = pexp.expect(['\w+# ', 'term% ', 'user\[glenda\]\: ', 'bootargs is \(.*\)\[.*\]', 'authid\:', 'Password\: '])
+      if i==0 or i==1:
          break
-      elif i==1: # Normal Boot.
+      if i==2:
          pexp.sendline()
-      elif i==2: # Disk Encryption.
-         pexp.sendline("!rc")
-         pexp.expect('% ')
-         pexp.sendline("disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other")
-         pexp.expect('Password: ')
-         pexp.sendline(DISK_PASS)
-         pexp.expect('% ')
-         pexp.sendline("exit")
-         pexp.expect('bootargs is ')
+      elif i==3: # Normal boot; disk encryption and super normal
+         if disk_pass:
+            pexp.sendline("!rc")
+            pexp.expect('% ')
+            pexp.sendline("disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other")
+            pexp.expect('Password: ')
+            pexp.sendline(disk_pass)
+            pexp.expect('% ')
+            pexp.sendline("exit")
+            pexp.expect('bootargs is ')
+            pexp.sendline()
+         else:
+            pexp.sendline()
+      elif i==4: # Booting a grid host with no vram
+         pexp.sendline('glenda')
+         pexp.expect('authdom\:')
+         pexp.sendline('localgrid')
+         pexp.expect('secstore key\:')
+         pexp.sendline(glenda_pass)
+         pexp.expect('password\:')
+         pexp.sendline(glenda_pass)
+         pexp.expect('confirm password\: ')
+         pexp.sendline(glenda_pass)
+         pexp.expect('enable legacy p9sk1\[no\]\: ')
          pexp.sendline()
+      elif i==5: # Additional password prompt for the prev
+         pexp.sendline(glenda_pass)
+         pexp.expect('Confirm password\: ')
+         pexp.sendline(glenda_pass)
    return(pexp)
 
 def halt_vm(pexp):
@@ -31,9 +51,7 @@ def halt_vm(pexp):
    return(0)
 
 def grid_authserver_vm(command, glenda_pass):
-   pexp = pexpect.spawn(command, timeout=None, encoding='utf-8')
-   pexp.logfile = sys.stdout
-   pexp.expect('authserve# ')
+   pexp = boot_vm(command, glenda_pass, "") # only the main serve needs the disk password ever
    pexp.sendline('auth/changeuser glenda')
    pexp.expect('Password\:')
    pexp.sendline(glenda_pass)
@@ -60,30 +78,7 @@ def grid_authserver_vm(command, glenda_pass):
    return(0)
 
 def grid_nvram_vm(command, glenda_pass):
-   pexp = pexpect.spawn(command, timeout=None, encoding='utf-8')
-   pexp.logfile = sys.stdout
-
-   while True:
-      i = pexp.expect(['\w+# ', 'authid\:', 'Password\: '])
-      if i==0: # Command line. We are done
-         break
-      elif i==1:
-         pexp.sendline('glenda')
-         pexp.expect('authdom\:')
-         pexp.sendline('localgrid')
-         pexp.expect('secstore key\:')
-         pexp.sendline(glenda_pass)
-         pexp.expect('password\:')
-         pexp.sendline(glenda_pass)
-         pexp.expect('confirm password\: ')
-         pexp.sendline(glenda_pass)
-         pexp.expect('enable legacy p9sk1.*')
-         pexp.sendline()
-      elif i==2:
-         pexp.sendline(glenda_pass)
-         pexp.expect('Confirm password\: ')
-         pexp.sendline(glenda_pass)
-
+   pexp = boot_vm(command, glenda_pass, "") # Never need disk password for nvram
    pexp.sendline('plan9Scripts/nvram.rc')
    pexp.expect('\w+# ')
    pexp.sendline('auth/wrkey')
@@ -97,7 +92,7 @@ def grid_nvram_vm(command, glenda_pass):
    pexp.sendline(glenda_pass)
    pexp.expect('confirm password\: ')
    pexp.sendline(glenda_pass)
-   pexp.expect('enable legacy p9sk1.*')
+   pexp.expect('enable legacy p9sk1\[no\]\: ')
    pexp.sendline()
    pexp.expect('\w+# ')
    pexp.sendline('fshalt')
@@ -105,15 +100,9 @@ def grid_nvram_vm(command, glenda_pass):
    pexp.close()
    return(0)
 
-def base_services_vm(command, glenda_pass, installType):
+def base_services_vm(command, glenda_pass, installType, disk_pass=""):
    # Enable CPU service
-   pexp = pexpect.spawn(command, timeout=None, encoding='utf-8')
-   pexp.logfile = sys.stdout
-   pexp.expect('bootargs is \(tcp, tls, il, local!device\)\[local!/dev/sd00/fscache\]')
-   pexp.sendline()
-   pexp.expect('user\[glenda\]: ')
-   pexp.sendline()
-   pexp.expect('term% ')
+   pexp = boot_vm(command, glenda_pass, disk_pass)
    pexp.sendline('9fs 9fat; echo \'service=cpu\' >>/n/9fat/plan9.ini')
    pexp.expect('term% ')
    pexp.sendline('fshalt')
@@ -121,32 +110,28 @@ def base_services_vm(command, glenda_pass, installType):
    pexp.close()
 
    # Set a password for Glenda
-   pexp = pexpect.spawn(command, timeout=None, encoding='utf-8')
-   pexp.logfile = sys.stdout
-   pexp.expect('bootargs is \(tcp, tls, il, local!device\)\[local!/dev/sd00/fscache\]')
-   pexp.sendline()
-   pexp.expect('authid\: ')
-   pexp.sendline('glenda')
-   pexp.expect('authdom\: ')
-   pexp.sendline('localgrid')
-   pexp.expect('secstore key\: ')
-   pexp.sendline('Password')
-   pexp.expect('password\: ')
-   pexp.sendline('Password')
-   pexp.expect('confirm password\: ')
-   pexp.sendline('Password')
-   pexp.expect('enable legacy p9sk1.*\: ')
-   pexp.sendline()
-   pexp.expect('# ')
+   pexp = boot_vm(command, glenda_pass, disk_pass)
    pexp.sendline('fshalt')
    pexp.expect(pexpect.EOF)
    pexp.close()
 
    # Turn on 9p/fs Serve
+   bootfs = '/dev/sd00/fscache'
+   if disk_pass:
+      bootfs = '/dev/fs/fscache'
    pexp = pexpect.spawn(command, timeout=None, encoding='utf-8')
    pexp.logfile = sys.stdout
-   pexp.expect('bootargs is \(tcp, tls, il, local!device\)\[local!/dev/sd00/fscache\]')
-   pexp.sendline('local!/dev/sd00/fscache -c')
+   if disk_pass:
+      pexp.expect('bootargs is \(.*\)\[.*\]')
+      pexp.sendline('!rc')
+      pexp.expect('% ')
+      pexp.sendline('disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other')
+      pexp.expect('Password\: ')
+      pexp.sendline(disk_pass)
+      pexp.expect('% ')
+      pexp.sendline('exit')
+   pexp.expect('bootargs is \(.*\)\[.*\]')
+   pexp.sendline('local!%s -c' % (bootfs))
    pexp.expect('config\: ')
    pexp.sendline('noauth')
    pexp.expect('config\: ')
@@ -154,7 +139,7 @@ def base_services_vm(command, glenda_pass, installType):
    pexp.expect('config\: ')
    pexp.sendline('end')
    pexp.expect('# ')
-   pexp.sendline('9fs 9fat; echo \'bootargs=local!/dev/sd00/fscache -a tcp!*!564\' >>/n/9fat/plan9.ini')
+   pexp.sendline('9fs 9fat; echo \'bootargs=local!%s -a tcp!*!564\' >>/n/9fat/plan9.ini' % (bootfs))
    pexp.expect('# ')
    pexp.sendline('fshalt')
    pexp.expect(pexpect.EOF)
@@ -162,11 +147,7 @@ def base_services_vm(command, glenda_pass, installType):
 
    # Copy post install scripts and execute
    command_withIso = "%s -drive if=none,id=vd1,file=grid/plan9Scripts.iso -device scsi-cd,drive=vd1," % (command)
-   pexp = pexpect.spawn(command_withIso, timeout=None, encoding='utf-8')
-   pexp.logfile = sys.stdout
-   pexp.expect('bootargs is \(tcp, tls, il, local!device\)\[local!/dev/sd00/fscache -a .*\]')
-   pexp.sendline()
-   pexp.expect('# ')
+   pexp = boot_vm(command_withIso, glenda_pass, disk_pass)
    pexp.sendline('mkdir plan9Scripts')
    pexp.expect('# ')
    pexp.sendline('mount <{9660srv -s >[0=1]} /n/iso /dev/sd01/data')
@@ -186,7 +167,7 @@ def base_services_vm(command, glenda_pass, installType):
    return(0)
 
 # Plan 9 install: take all defaults and when you see >>>, type w \n q.
-def base_install_vm(command):
+def base_install_vm(command, disk_pass=""):
    pexp = pexpect.spawn(command, timeout=None, encoding='utf-8')
    pexp.logfile = sys.stdout
    pexp.expect('bootargs is \(tcp, tls, il, local!device\)\[local!/dev/sd01/data\]')
@@ -219,15 +200,41 @@ def base_install_vm(command):
    pexp.sendline('w')
    pexp.expect('>>>')
    pexp.sendline('q')
+
    # Disk Encyption Here
-   pexp.expect('Task to do \[.*\]\: ')
-   pexp.sendline()
-   pexp.expect('Cwfs cache partition .*\: ')
-   pexp.sendline()
-   pexp.expect('Cwfs worm partition .*\: ')
-   pexp.sendline()
-   pexp.expect('Cwfs other partition .*\: ')
-   pexp.sendline()
+   if disk_pass:
+      pexp.expect('Task to do \[.*\]\: ')
+      pexp.sendline('!rc')
+      pexp.expect('term% ')
+      pexp.sendline('disk/cryptsetup -f /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other')
+      pexp.expect('Password\: ')
+      pexp.sendline(disk_pass)
+      pexp.expect('Confirm\: ')
+      pexp.sendline(disk_pass)
+      pexp.expect('term% ')
+      pexp.sendline('disk/cryptsetup -i /dev/sd00/fsworm /dev/sd00/fscache /dev/sd00/other')
+      pexp.expect('Password: ')
+      pexp.sendline(disk_pass)
+      pexp.expect('term% ')
+      pexp.sendline('exit')
+
+      pexp.expect('Task to do \[.*\]\: ')
+      pexp.sendline()
+      pexp.expect('Cwfs cache partition .*\: ')
+      pexp.sendline('/dev/fs/fscache')
+      pexp.expect('Cwfs worm partition .*\: ')
+      pexp.sendline('/dev/fs/fsworm')
+      pexp.expect('Cwfs other partition .*\: ')
+      pexp.sendline('/dev/fs/other')
+   else:
+      pexp.expect('Task to do \[.*\]\: ')
+      pexp.sendline()
+      pexp.expect('Cwfs cache partition .*\: ')
+      pexp.sendline()
+      pexp.expect('Cwfs worm partition .*\: ')
+      pexp.sendline()
+      pexp.expect('Cwfs other partition .*\: ')
+      pexp.sendline()
    pexp.expect('Ream the filesystem?.*')
    pexp.sendline()
    pexp.expect('Task to do \[.*\]: ')

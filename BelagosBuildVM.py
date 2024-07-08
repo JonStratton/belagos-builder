@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import pexpect, os, platform, requests, re, subprocess, sys, glob
+import os, platform, requests, re, subprocess, glob
 import BelagosLib as bl
 from configparser import ConfigParser
 
@@ -30,23 +30,31 @@ def main():
 
    # Do basic install by adding custom 
    command_install = "%s -drive if=none,id=vd1,file=%s -device scsi-cd,drive=vd1, -kernel %s -initrd plan9.ini -no-reboot" % (config.get('main_vm', 'command'), local_iso, kern)
-   bl.base_install_vm(command_install)
+   bl.base_install_vm(command_install, disk_pass)
 
    # Package up plan9 scripts and make an ISO for the install process
    subprocess.run(['mkisofs', '-o', SCRIPTS_ISO, './plan9'])
 
    # Service Stuff
-   bl.base_services_vm(config.get('main_vm', 'command'), glenda_pass, config.get('main', 'type'))
+   bl.base_services_vm(config.get('main_vm', 'command'), glenda_pass, config.get('main', 'type'), disk_pass)
 
    if config.get('main', 'type') == 'grid':
-      pexp_main = bl.boot_vm(config.get('main_vm', 'command'))
-      subprocess.run(['qemu-img', 'create', '-f', 'qcow2', DISK_AUTH, '1M'])
-      bl.grid_nvram_vm(config.get('auth_vm', 'command'), glenda_pass)
+      pexp_main = bl.boot_vm(config.get('main_vm', 'command'), glenda_pass, disk_pass)
+
+      # Dont create AUTH and CPU disks if we are using disk encryption, as those contain cached glenda creds
+      if not int(config.get('main', 'disk_encryption')):
+         subprocess.run(['qemu-img', 'create', '-f', 'qcow2', DISK_AUTH, '1M'])
+         bl.grid_nvram_vm(config.get('auth_vm', 'command'), glenda_pass)
+
       bl.grid_authserver_vm(config.get('auth_vm', 'command'), glenda_pass)
-      pexp_auth = bl.boot_vm(config.get('auth_vm', 'command'))
-      subprocess.run(['qemu-img', 'create', '-f', 'qcow2', DISK_CPU, '1M'])
-      bl.grid_nvram_vm(config.get('cpu_vm', 'command'), glenda_pass)
-      bl.halt_vm(pexp_auth)
+
+      # You only really need to do this step to create nvram. So no need to continue on if we are using disk encryption
+      if not int(config.get('main', 'disk_encryption')):
+         pexp_auth = bl.boot_vm(config.get('auth_vm', 'command'), glenda_pass, disk_pass)
+         subprocess.run(['qemu-img', 'create', '-f', 'qcow2', DISK_CPU, '1M'])
+         bl.grid_nvram_vm(config.get('cpu_vm', 'command'), glenda_pass)
+         bl.halt_vm(pexp_auth)
+
       bl.halt_vm(pexp_main)
 
    # Cleanup
@@ -96,8 +104,13 @@ def get_specs_user(config_file, arch):
 
    glenda_pass = input("Enter password for glenda: ")
    disk_gb = input("Disk for install(in GB): ")
-   # disk_pass = input("Enter optional disk encryption password. If entered, this password will be required to boot: ")
-   disk_pass = ''
+   disk_pass = input("Enter optional disk encryption password. If entered, this password will be required to boot: ")
+
+   disk_encryption = 0
+   autostart = 1
+   if disk_pass: # Turn off autostart as we need the disk_pass (and glenda pass) to boot now.
+      disk_encryption = 1
+      autostart = 0
 
    config = ConfigParser()
    if os.path.exists(config_file):
@@ -109,14 +122,18 @@ def get_specs_user(config_file, arch):
          main_core = input("RAM for fsserve(MB): ")
          authserve_core = input("RAM for authserve(MB): ")
          cpuserve_core = input("RAM for cpuserve(MB): ")
-         config['main'] = {'order': 'main_vm auth_vm cpu_vm', 'autostart': 1, 'type': installType, 'web_password': web_pass}
-         config['main_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_main.img -device scsi-hd,drive=vd0 -nographic' % (arch, main_core)}
-         config['auth_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_authserve.img -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, authserve_core)}
-         config['cpu_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_cpuserve.img -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, cpuserve_core)}
+         config['main'] = {'order': 'main_vm auth_vm cpu_vm', 'autostart': autostart, 'disk_encryption': disk_encryption, 'type': installType, 'web_password': web_pass}
+         config['main_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -nographic' % (arch, main_core, DISK_MAIN)}
+         if disk_encryption:
+            config['auth_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic' % (arch, authserve_core)}
+            config['cpu_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic' % (arch, cpuserve_core)}
+         else:
+            config['auth_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, authserve_core, DISK_AUTH)}
+            config['cpu_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, cpuserve_core, DISK_CPU)}
       else:
          main_core = input("RAM for install(MB): ")
-         config['main'] = {'order': 'main_vm', 'autostart': 1, 'type': installType, 'web_password': web_pass}
-         config['main_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=grid/9front_main.img -device scsi-hd,drive=vd0 -nographic' % (arch, main_core)}
+         config['main'] = {'order': 'main_vm', 'autostart': autostart, 'disk_encryption': disk_encryption, 'type': installType, 'web_password': web_pass}
+         config['main_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -nographic' % (arch, main_core, DISK_MAIN)}
    
       # Write the configuration to a file
       with open(config_file, 'w') as config_fileH:

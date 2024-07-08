@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import pexpect, os
+import os
 import BelagosLib as bl
 from flask import Flask, request, session
 from configparser import ConfigParser
@@ -8,13 +8,14 @@ CONFIG = ConfigParser()
 CONFIG.read('BelagosService.conf')
 VM_ORDER = CONFIG.get('main', 'order').split()
 WEB_PASSWORD = CONFIG.get('main', 'web_password')
-AUTOSTART = CONFIG.get('main', 'autostart')
+AUTOSTART = int(CONFIG.get('main', 'autostart'))
 
 # Globals
 app = Flask(__name__)
 VM_TO_EXP = {};
 STATUS = 'preboot';
 DISK_PASSWORD = '';
+GLENDA_PASSWORD = '';
 
 @app.route("/login", methods=['GET', 'POST'])
 def login_http():
@@ -34,13 +35,20 @@ def status_http():
    #   return 'Unauthorized', 401
    return STATUS
 
-# TODO, when encrypted, both disk and glenda passwords are needed
-@app.route("/password", methods=['GET', 'POST'])
-def password_http():
+@app.route("/disk_password", methods=['GET', 'POST'])
+def disk_password_http():
    global DISK_PASSWORD
    #if not session.get('logged_in'):
    #   return 'Unauthorized', 401
    DISK_PASSWORD = request.values.get('password')
+   return "SUCCESS"
+
+@app.route("/glenda_password", methods=['GET', 'POST'])
+def glenda_password_http():
+   global GLENDA_PASSWORD
+   #if not session.get('logged_in'):
+   #   return 'Unauthorized', 401
+   GLENDA_PASSWORD = request.values.get('password')
    return "SUCCESS"
 
 @app.route("/boot")
@@ -50,7 +58,7 @@ def boot_http():
    #   return 'Unauthorized', 401
    for vm in VM_ORDER:
       command = CONFIG.get(vm, 'command')
-      VM_TO_EXP[vm] = bl.boot_vm(command)
+      VM_TO_EXP[vm] = bl.boot_vm(command, GLENDA_PASSWORD, DISK_PASSWORD)
    STATUS = 'booted';
    return STATUS
 
