@@ -1,0 +1,39 @@
+<html>
+<head>
+<title>Belagos Web UI</title>
+</head>
+<img src="/static/bela_black.png" alt="Belagos Logo"><br />
+{% if session['logged_in'] %}
+
+<label for="status">Status: </label>
+<input type="text" name="status" value="{{status}}" disabled><br />
+
+{% if status != 'booted' %}
+<form action="/boot">
+   <button type="submit">Boot</button>
+</form>
+{% else %}
+<form action="/halt">
+   <button type="submit">Halt</button>
+</form>
+{% endif %}
+
+{% if disk_encryption %}
+<form action="/password" method="POST">
+  <label for="disk_password">Disk Password</label>
+  <input type="password" name="disk_password"><br />
+  <label for="glenda_password">Glenda Password</label>
+  <input type="password" name="glenda_password"><br />
+  <input type="submit" value="Store">
+</form>
+{% endif %}
+
+{% else %}
+<form action="/login" method="POST">
+  <label for="password">Web Password</label>
+  <input type="password" name="password">
+  <input type="submit" value="Log in">
+</form>
+{% endif %}
+
+</html>
