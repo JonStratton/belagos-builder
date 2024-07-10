@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os
+import os, threading
 import BelagosLib as bl
 from flask import Flask, request, session, render_template, send_from_directory, redirect, url_for
 from configparser import ConfigParser
@@ -17,6 +17,22 @@ VM_TO_EXP = {};
 STATUS = 'preboot';
 DISK_PASSWORD = '';
 GLENDA_PASSWORD = '';
+
+def boot():
+   global STATUS
+   for vm in VM_ORDER:
+      command = CONFIG.get(vm, 'command')
+      VM_TO_EXP[vm] = bl.boot_vm(command, GLENDA_PASSWORD, DISK_PASSWORD)
+   STATUS = 'booted';
+   return 0
+
+def halt():
+   global STATUS
+   for vm in reversed(VM_ORDER):
+      if VM_TO_EXP[vm].isalive():
+         bl.halt_vm(VM_TO_EXP[vm])
+   STATUS = 'halted';
+   return 0
 
 @app.route("/", methods=['GET'])
 def root_http():
@@ -58,29 +74,20 @@ def boot_http():
    if not session.get('logged_in'):
       return 'Unauthorized', 401
    global STATUS, VM_TO_EXP
-   for vm in VM_ORDER:
-      command = CONFIG.get(vm, 'command')
-      VM_TO_EXP[vm] = bl.boot_vm(command, GLENDA_PASSWORD, DISK_PASSWORD)
-   STATUS = 'booted';
+   boot()
    return redirect(url_for('root_http'))
 
 @app.route("/halt")
 def halt_http():
-   global STATUS
    if not session.get('logged_in'):
       return 'Unauthorized', 401
-   for vm in reversed(VM_ORDER):
-      if VM_TO_EXP[vm].isalive():
-         bl.halt_vm(VM_TO_EXP[vm])
-   STATUS = 'halted';
+   halt()
    return redirect(url_for('root_http'))
 
 if __name__ == '__main__':
    if AUTOSTART:
-      for vm in VM_ORDER:
-         command = CONFIG.get(vm, 'command')
-         VM_TO_EXP[vm] = bl.boot_vm(command)
-      STATUS = 'booted';
+      boot_thread = threading.Thread(target=boot, args=())
+      boot_thread.start()
 
    app.secret_key = os.urandom(12)
    app.run()
