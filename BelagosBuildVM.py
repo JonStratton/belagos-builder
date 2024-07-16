@@ -4,14 +4,14 @@ import BelagosLib as bl
 from configparser import ConfigParser
 
 CONFIG_FILE = './BelagosService.conf'
-DISK_MAIN = 'grid/9front_main.img'
-DISK_AUTH = 'grid/9front_authserve.img'
-DISK_CPU = 'grid/9front_cpuserve.img'
-SCRIPTS_ISO = 'grid/plan9Scripts.iso'
+DISK_MAIN = './9front_main.img'
+DISK_AUTH = './9front_authserve.img'
+DISK_CPU = './9front_cpuserve.img'
+SCRIPTS_ISO = './plan9Scripts.iso'
 
 def main():
    arch = platform.machine()
-   iso_arch = get_iso_arch(arch)
+   iso_arch, qemu_arch = get_alt_arch(arch)
 
    # Download the iso if not installed
    local_iso = '9front.%s.iso' % (iso_arch)
@@ -23,7 +23,7 @@ def main():
    kern = process_iso(local_iso, iso_arch)
 
    # Read config, or create one if there isnt one.
-   glenda_pass, disk_pass, disk_gb, config = get_specs_user(CONFIG_FILE, arch)
+   glenda_pass, disk_pass, disk_gb, config = get_specs_user(CONFIG_FILE, qemu_arch)
 
    # Create Disk Images
    subprocess.run(['qemu-img', 'create', '-f', 'qcow2', DISK_MAIN, disk_gb]) 
@@ -36,7 +36,7 @@ def main():
    subprocess.run(['mkisofs', '-o', SCRIPTS_ISO, './plan9'])
 
    # Service Stuff
-   bl.base_services_vm(config.get('main_vm', 'command'), glenda_pass, config.get('main', 'type'), disk_pass)
+   bl.base_services_vm(config.get('main_vm', 'command'), SCRIPTS_ISO, glenda_pass, config.get('main', 'type'), disk_pass)
 
    if config.get('main', 'type') == 'grid':
       pexp_main = bl.boot_vm(config.get('main_vm', 'command'), glenda_pass, disk_pass)
@@ -64,11 +64,15 @@ def main():
 
    return(0)
 
-def get_iso_arch(arch):
+def get_alt_arch(arch):
    iso_arch = arch
+   qemu_arch = arch
    if arch == 'x86_64':
       iso_arch = 'amd64'
-   return(iso_arch)
+   elif arch == 'i686':
+      iso_arch = '386'
+      qemu_arch = 'i386'
+   return(iso_arch, qemu_arch)
 
 # gunzip and pull out the plan9.ini file (and kern?) so we can patch it for serial ccoonnssoollee
 def process_iso(local_iso, iso_arch):
@@ -123,17 +127,17 @@ def get_specs_user(config_file, arch):
          authserve_core = input("RAM for authserve(MB): ")
          cpuserve_core = input("RAM for cpuserve(MB): ")
          config['main'] = {'order': 'main_vm auth_vm cpu_vm', 'autostart': autostart, 'disk_encryption': disk_encryption, 'type': installType, 'web_password': web_pass}
-         config['main_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -nographic' % (arch, main_core, DISK_MAIN)}
+         config['main_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -nographic' % (arch, main_core, DISK_MAIN)}
          if disk_encryption:
-            config['auth_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic' % (arch, authserve_core)}
-            config['cpu_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic' % (arch, cpuserve_core)}
+            config['auth_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic' % (arch, authserve_core)}
+            config['cpu_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic' % (arch, cpuserve_core)}
          else:
-            config['auth_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, authserve_core, DISK_AUTH)}
-            config['cpu_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, cpuserve_core, DISK_CPU)}
+            config['auth_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, authserve_core, DISK_AUTH)}
+            config['cpu_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, cpuserve_core, DISK_CPU)}
       else:
          main_core = input("RAM for install(MB): ")
          config['main'] = {'order': 'main_vm', 'autostart': autostart, 'disk_encryption': disk_encryption, 'type': installType, 'web_password': web_pass}
-         config['main_vm'] = {'command': 'qemu-system-%s -cpu host -enable-kvm -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -nographic' % (arch, main_core, DISK_MAIN)}
+         config['main_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -nographic' % (arch, main_core, DISK_MAIN)}
    
       # Write the configuration to a file
       with open(config_file, 'w') as config_fileH:

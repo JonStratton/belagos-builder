@@ -100,7 +100,7 @@ def grid_nvram_vm(command, glenda_pass):
    pexp.close()
    return(0)
 
-def base_services_vm(command, glenda_pass, installType, disk_pass=""):
+def base_services_vm(command, scripts_iso, glenda_pass, installType, disk_pass=""):
    # Enable CPU service
    pexp = boot_vm(command, glenda_pass, disk_pass)
    pexp.sendline('9fs 9fat; echo \'service=cpu\' >>/n/9fat/plan9.ini')
@@ -146,7 +146,7 @@ def base_services_vm(command, glenda_pass, installType, disk_pass=""):
    pexp.close()
 
    # Copy post install scripts and execute
-   command_withIso = "%s -drive if=none,id=vd1,file=grid/plan9Scripts.iso -device scsi-cd,drive=vd1," % (command)
+   command_withIso = "%s -drive if=none,id=vd1,file=%s -device scsi-cd,drive=vd1," % (command, scripts_iso)
    pexp = boot_vm(command_withIso, glenda_pass, disk_pass)
    pexp.sendline('mkdir plan9Scripts')
    pexp.expect('# ')
