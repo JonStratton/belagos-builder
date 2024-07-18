@@ -2,6 +2,7 @@
 # This script exposes the grid inside of the vde network to tor hidden services. This will allow people online to connect to your grid with tor.
 
 proj_root=`dirname $0`'/..'
+type=`grep type $proj_root/BelagosService.conf | cut -d' ' -f3`
 
 outbound()
 {
@@ -35,20 +36,32 @@ inbound()
       install
    fi
 
-   . $proj_root/grid/env.sh
-   sudo sh -c "( echo \"
+   sudo cp /etc/tor/torrc /etc/tor/torrc_prebelagos
+
+   if [ $type = 'grid' ]; then
+      sudo sh -c "( echo \"
 HiddenServiceDir /var/lib/tor/hidden_service/
-HiddenServicePort 564 $mainserve_ip:564
-HiddenServicePort 567 $authserve_ip:567
-HiddenServicePort 5356 $authserve_ip:5356
-HiddenServicePort 17019 $cpuserve_ip:17019
-HiddenServicePort 17020 $cpuserve_ip:17020\" >> /etc/tor/torrc )"
+HiddenServicePort 564 192.168.9.3:564
+HiddenServicePort 567 192.168.9.4:567
+HiddenServicePort 5356 192.168.9.4:5356
+HiddenServicePort 17019 192.168.9.5:17019
+HiddenServicePort 17020 192.168.9.5:17020\" >> /etc/tor/torrc )"
+   else
+      sudo sh -c "( echo \"
+HiddenServiceDir /var/lib/tor/hidden_service/
+HiddenServicePort 564 192.168.9.3:564
+HiddenServicePort 567 192.168.9.3:567
+HiddenServicePort 5356 192.168.9.3:5356
+HiddenServicePort 17019 192.168.9.3:17019
+HiddenServicePort 17020 192.168.9.3:17020\" >> /etc/tor/torrc )"
+   fi
 
    sudo systemctl restart tor
 }
 
 uninstall()
 {
+   sudo mv /etc/tor/torrc_prebelagos /etc/tor/torrc
    sudo DEBIAN_FRONTEND=noninteractive apt-get remove --purge -y tor
 }
 

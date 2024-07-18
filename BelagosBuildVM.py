@@ -8,10 +8,14 @@ DISK_MAIN = './9front_main.img'
 DISK_AUTH = './9front_authserve.img'
 DISK_CPU = './9front_cpuserve.img'
 SCRIPTS_ISO = './plan9Scripts.iso'
+TIMEZONE = 'US_Central'
 
 def main():
    arch = platform.machine()
    iso_arch, qemu_arch = get_alt_arch(arch)
+
+   # Read config, or create one if there isnt one.
+   glenda_pass, disk_pass, disk_gb, config = get_specs_user(CONFIG_FILE, qemu_arch)
 
    # Download the iso if not installed
    local_iso = '9front.%s.iso' % (iso_arch)
@@ -22,21 +26,21 @@ def main():
    # Pull out boot ini and kern. Patch boot ini
    kern = process_iso(local_iso, iso_arch)
 
-   # Read config, or create one if there isnt one.
-   glenda_pass, disk_pass, disk_gb, config = get_specs_user(CONFIG_FILE, qemu_arch)
-
    # Create Disk Images
    subprocess.run(['qemu-img', 'create', '-f', 'qcow2', DISK_MAIN, disk_gb]) 
 
    # Do basic install by adding custom 
    command_install = "%s -drive if=none,id=vd1,file=%s -device scsi-cd,drive=vd1, -kernel %s -initrd plan9.ini -no-reboot" % (config.get('main_vm', 'command'), local_iso, kern)
-   bl.base_install_vm(command_install, disk_pass)
+   bl.base_install_vm(command_install, TIMEZONE, disk_pass)
+   os.unlink(kern)
+   os.unlink('./plan9.ini')
 
    # Package up plan9 scripts and make an ISO for the install process
    subprocess.run(['mkisofs', '-o', SCRIPTS_ISO, './plan9'])
 
    # Service Stuff
    bl.base_services_vm(config.get('main_vm', 'command'), SCRIPTS_ISO, glenda_pass, config.get('main', 'type'), disk_pass)
+   os.unlink(SCRIPTS_ISO)
 
    if config.get('main', 'type') == 'grid':
       pexp_main = bl.boot_vm(config.get('main_vm', 'command'), glenda_pass, disk_pass)
@@ -56,11 +60,6 @@ def main():
          bl.halt_vm(pexp_auth)
 
       bl.halt_vm(pexp_main)
-
-   # Cleanup
-   os.unlink(SCRIPTS_ISO)
-   os.unlink(kern)
-   os.unlink('./plan9.ini')
 
    return(0)
 

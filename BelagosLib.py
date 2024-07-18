@@ -167,7 +167,7 @@ def base_services_vm(command, scripts_iso, glenda_pass, installType, disk_pass="
    return(0)
 
 # Plan 9 install: take all defaults and when you see >>>, type w \n q.
-def base_install_vm(command, disk_pass=""):
+def base_install_vm(command, timezone, disk_pass=""):
    pexp = pexpect.spawn(command, timeout=None, encoding='utf-8')
    pexp.logfile = sys.stdout
    pexp.expect('bootargs is \(tcp, tls, il, local!device\)\[local!/dev/sd01/data\]')
@@ -264,7 +264,7 @@ def base_install_vm(command, disk_pass=""):
    pexp.expect('Task to do \[.*\]\: ')
    pexp.sendline()
    pexp.expect('Time Zone .*: ')
-   pexp.sendline('US_Central')
+   pexp.sendline(timezone)
    pexp.expect('Task to do \[.*\]\: ')
    pexp.sendline()
    pexp.expect('Plan 9 FAT partition .*\: ')

@@ -15,27 +15,19 @@ sudo usermod -a -G kvm belagos
 
 # Copy / Move stuff over.
 sudo mkdir /opt/belagos/
-sudo mkdir /opt/belagos/grid/
 sudo cp BelagosService.py /opt/belagos/
 sudo cp BelagosLib.py /opt/belagos/
 sudo mv BelagosService.conf /opt/belagos/
-sudo mv grid/* /opt/belagos/grid/
-
-if [ -f grid/9front_authserve.img ]; then
-   sudo mv grid/9front_authserve.img /opt/belagos/grid/
-fi
-
-if [ -f grid/9front_cpuserve.img ]; then
-   sudo mv grid/9front_cpuserve.img /opt/belagos/grid/
-fi
+sudo mv 9front_*.img /opt/belagos/
 
 sudo chown -R belagos:belagos /opt/belagos/*
+sudo chmod 640 /opt/belagos/*.img
+sudo chmod 640 /opt/belagos/*.conf
 
 sudo sh -c '( echo "[Unit]
 Description=Belagos Service
 After=network.target
 [Service]
-Type=forking
 TimeoutStartSec=600
 User=belagos
 WorkingDirectory=/opt/belagos
@@ -45,7 +37,7 @@ WantedBy=multi-user.target" > /etc/systemd/system/belagos.service )'
 
 sudo systemctl daemon-reload
 sudo systemctl enable belagos.service
-sudo systemctl start belagos.service
+sudo systemctl start belagos.service &
 }
 
 #############

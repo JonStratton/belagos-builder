@@ -2,6 +2,8 @@
 # This script exposes the internal vde network ports on the host. You should do this if you want other people on your network to connect to your grid, but your too boring to use tor or yggdrasil. 
 
 proj_root=`dirname $0`'/..'
+type=`grep type $proj_root/BelagosService.conf | cut -d' ' -f3`
+echo $type
 
 outbound()
 {
@@ -37,12 +39,18 @@ inbound()
    fi
 
    # iptables commands for direct connections?
-   . $proj_root/grid/env.sh
    sudo sysctl -w net.ipv4.ip_forward=1
-   sudo iptables -t nat -I PREROUTING -p tcp --dport 564 -j DNAT --to-destination $mainserve_ip:564
-   sudo iptables -t nat -I PREROUTING -p tcp --dport 567 -j DNAT --to-destination $authserve_ip:567
-   sudo iptables -t nat -I PREROUTING -p tcp --dport 17019 -j DNAT --to-destination $cpuserve_ip:17019
-   sudo iptables -t nat -I PREROUTING -p tcp --dport 17020 -j DNAT --to-destination $cpuserve_ip:17020
+   if [ $type = 'grid' ]; then
+      sudo iptables -t nat -I PREROUTING -p tcp --dport 564 -j DNAT --to-destination 192.168.9.3:564
+      sudo iptables -t nat -I PREROUTING -p tcp --dport 567 -j DNAT --to-destination 192.168.9.4:567
+      sudo iptables -t nat -I PREROUTING -p tcp --dport 17019 -j DNAT --to-destination 192.168.9.5:17019
+      sudo iptables -t nat -I PREROUTING -p tcp --dport 17020 -j DNAT --to-destination 192.168.9.5:17020
+   else
+      sudo iptables -t nat -I PREROUTING -p tcp --dport 564 -j DNAT --to-destination 192.168.9.3:564
+      sudo iptables -t nat -I PREROUTING -p tcp --dport 567 -j DNAT --to-destination 192.168.9.3:567
+      sudo iptables -t nat -I PREROUTING -p tcp --dport 17019 -j DNAT --to-destination 192.168.9.3:17019
+      sudo iptables -t nat -I PREROUTING -p tcp --dport 17020 -j DNAT --to-destination 192.168.9.3:17020
+   fi
    sudo sh -c '( iptables-save > /etc/iptables/rules.v4 )'
 }
 
