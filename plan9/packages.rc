@@ -10,7 +10,7 @@
 cd $home/tmp
 
 # 9front rio.amber
-tar xzf /n/extra/rio.amber.tgz
+tar xzf /n/extra/src/rio.amber.tgz
 cd rio.amber
 ./install
 mv /bin/rio /bin/rio.snore
@@ -19,7 +19,7 @@ cd ..
 rm -rf rio.amber
 
 # 9front vt.green
-tar xzf /n/extra/vt.green.tgz
+tar xzf /n/extra/src/vt.green.tgz
 cd vt.green
 mk
 mk install
@@ -27,7 +27,7 @@ cd ..
 rm -rf vt.green
 
 # 9front mothra.black
-tar xzf /n/extra/mothra.black.tgz
+tar xzf /n/extra/src/mothra.black.tgz
 cd mothra.black
 mk
 mk install
@@ -35,7 +35,7 @@ cd ..
 rm -rf mothra.black
 
 # 9front stats.amber
-tar xzf /n/extra/stats.amber.tgz
+tar xzf /n/extra/src/stats.amber.tgz
 cd stats.amber
 mk
 mk install

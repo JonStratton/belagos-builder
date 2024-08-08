@@ -27,7 +27,7 @@ def main():
    kern = process_iso(local_iso, iso_arch)
 
    # Create Disk Images
-   subprocess.run(['qemu-img', 'create', '-f', 'qcow2', DISK_MAIN, disk_gb]) 
+   subprocess.run(['qemu-img', 'create', '-f', 'qcow2', DISK_MAIN, "%sG" % (disk_gb)])
 
    # Do basic install by adding custom 
    command_install = "%s -drive if=none,id=vd1,file=%s -device scsi-cd,drive=vd1, -kernel %s -initrd plan9.ini -no-reboot" % (config.get('main_vm', 'command'), local_iso, kern)

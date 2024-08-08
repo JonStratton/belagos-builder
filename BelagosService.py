@@ -10,6 +10,7 @@ VM_ORDER = CONFIG.get('main', 'order').split()
 WEB_PASSWORD = CONFIG.get('main', 'web_password')
 AUTOSTART = int(CONFIG.get('main', 'autostart'))
 DISK_ENCRYPTION = int(CONFIG.get('main', 'disk_encryption'))
+OVERLAY_SCRIPTS = {"clear":"optional/clearnet.sh","tor":"optional/tor.sh","yggdrasil":"optional/yggdrasil.sh","restore":"optional/restore.sh"}
 
 # Globals
 app = Flask(__name__)
@@ -60,6 +61,14 @@ def status_http():
       return 'Unauthorized', 401
    return STATUS
 
+@app.route("/network", methods=['POST'])
+def network_http():
+   if not session.get('logged_in'):
+      return 'Unauthorized', 401
+   overlay = request.values.get('overlay')
+   action = request.values.get('action')
+   return redirect(url_for('root_http'))
+
 @app.route("/password", methods=['GET', 'POST'])
 def disk_password_http():
    if not session.get('logged_in'):
@@ -90,5 +99,5 @@ if __name__ == '__main__':
       boot_thread.start()
 
    app.secret_key = os.urandom(12)
-   app.run()
+   app.run(host='192.168.9.1', port=5000)
 
