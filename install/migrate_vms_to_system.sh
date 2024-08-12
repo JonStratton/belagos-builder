@@ -15,15 +15,28 @@ sudo usermod -a -G kvm belagos
 
 # Copy / Move stuff over.
 sudo mkdir /opt/belagos/
+sudo mkdir /opt/belagos/optional/
 sudo cp BelagosService.py /opt/belagos/
 sudo cp BelagosLib.py /opt/belagos/
+sudo cp optional/* /opt/belagos/optional/
 sudo mv BelagosService.conf /opt/belagos/
 sudo mv 9front_*.img /opt/belagos/
 
-sudo chown -R belagos:belagos /opt/belagos/*
-sudo chmod 640 /opt/belagos/*.img
-sudo chmod 640 /opt/belagos/*.conf
+# Service root permissions
+sudo chown -R root:belagos /opt/belagos/
+sudo chmod 660 /opt/belagos/9front_*.img
+sudo chmod 640 /opt/belagos/BelagosService.conf
+sudo chmod 755 /opt/belagos/Belagos*.py
+sudo chmod 755 /opt/belagos/optional/*
 
+# sudo access
+sudo sh -c '( echo "# Created by belagos
+# Moved to /etc/sudoers.d/
+Cmnd_Alias BELAGOS = /opt/belagos/optional/clearnet.sh *, /opt/belagos/optional/restore.sh *, /opt/belagos/optional/tor.sh *, /opt/belagos/optional/yggdrasil.sh *
+%belagos ALL=NOPASSWD: BELAGOS" > /etc/sudoers.d/belagos-sudoers )'
+sudo chmod 440 /etc/sudoers.d/belagos-sudoers
+
+# Service
 sudo sh -c '( echo "[Unit]
 Description=Belagos Service
 After=network.target
@@ -50,6 +63,7 @@ sudo systemctl stop belagos.service
 sudo systemctl disable belagos.service
 sudo rm /etc/systemd/system/belagos.service
 sudo rm -rf /opt/belagos
+sudo rm /etc/sudoers.d/belagos-sudoers
 sudo userdel -r belagos
 }
 

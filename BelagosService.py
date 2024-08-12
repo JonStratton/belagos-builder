@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, threading
+import os, threading, subprocess
 import BelagosLib as bl
 from flask import Flask, request, session, render_template, send_from_directory, redirect, url_for
 from configparser import ConfigParser
@@ -10,7 +10,9 @@ VM_ORDER = CONFIG.get('main', 'order').split()
 WEB_PASSWORD = CONFIG.get('main', 'web_password')
 AUTOSTART = int(CONFIG.get('main', 'autostart'))
 DISK_ENCRYPTION = int(CONFIG.get('main', 'disk_encryption'))
+OVERLAY_CANSUDO = False
 OVERLAY_SCRIPTS = {"clear":"optional/clearnet.sh","tor":"optional/tor.sh","yggdrasil":"optional/yggdrasil.sh","restore":"optional/restore.sh"}
+OVERLAY_ACTIONS = ("install", "uninstall", "inbound", "outbound", "X")
 
 # Globals
 app = Flask(__name__)
@@ -43,7 +45,7 @@ def root_http():
 def static_bela():
    return send_from_directory('', 'bela_black.png')
 
-@app.route("/login", methods=['GET', 'POST'])
+@app.route("/login", methods=['POST'])
 def login_http():
    if (request.values.get('password') and (request.values.get('password') == WEB_PASSWORD)):
       session['logged_in'] = True
@@ -61,15 +63,21 @@ def status_http():
       return 'Unauthorized', 401
    return STATUS
 
-@app.route("/network", methods=['POST'])
+@app.route("/network", methods=['GET', 'POST'])
 def network_http():
    if not session.get('logged_in'):
       return 'Unauthorized', 401
    overlay = request.values.get('overlay')
    action = request.values.get('action')
+   if overlay not in OVERLAY_SCRIPTS:
+      return 'Bad Request', 400
+   if action not in OVERLAY_ACTIONS:
+      return 'Bad Request', 400
+   command = OVERLAY_SCRIPTS.get(overlay)
+   commandReturn = subprocess.run(["sudo", command, action], capture_output=True, text=True).stdout
    return redirect(url_for('root_http'))
 
-@app.route("/password", methods=['GET', 'POST'])
+@app.route("/password", methods=['POST'])
 def disk_password_http():
    if not session.get('logged_in'):
       return 'Unauthorized', 401
@@ -82,7 +90,6 @@ def disk_password_http():
 def boot_http():
    if not session.get('logged_in'):
       return 'Unauthorized', 401
-   global STATUS, VM_TO_EXP
    boot()
    return redirect(url_for('root_http'))
 
@@ -94,6 +101,10 @@ def halt_http():
    return redirect(url_for('root_http'))
 
 if __name__ == '__main__':
+   commandReturn = subprocess.run(["sudo", "-ln"], capture_output=True, text=True).stdout
+   if 'optional/restore.sh' in commandReturn:
+      OVERLAY_CANSUDO = True
+
    if AUTOSTART:
       boot_thread = threading.Thread(target=boot, args=())
       boot_thread.start()
