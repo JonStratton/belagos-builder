@@ -16,9 +16,12 @@ sudo usermod -a -G kvm belagos
 # Copy / Move stuff over.
 sudo mkdir /opt/belagos/
 sudo mkdir /opt/belagos/optional/
+sudo mkdir /opt/belagos/templates/
+sudo cp bela_black.png /opt/belagos/
 sudo cp BelagosService.py /opt/belagos/
 sudo cp BelagosLib.py /opt/belagos/
 sudo cp optional/* /opt/belagos/optional/
+sudo cp templates/* /opt/belagos/templates/
 sudo mv BelagosService.conf /opt/belagos/
 sudo mv 9front_*.img /opt/belagos/
 

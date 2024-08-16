@@ -12,7 +12,7 @@ AUTOSTART = int(CONFIG.get('main', 'autostart'))
 DISK_ENCRYPTION = int(CONFIG.get('main', 'disk_encryption'))
 OVERLAY_CANSUDO = False
 OVERLAY_SCRIPTS = {"clear":"optional/clearnet.sh","tor":"optional/tor.sh","yggdrasil":"optional/yggdrasil.sh","restore":"optional/restore.sh"}
-OVERLAY_ACTIONS = ("install", "uninstall", "inbound", "outbound", "X")
+OVERLAY_ACTIONS = ("install", "uninstall", "inbound", "outbound", " ")
 
 # Globals
 app = Flask(__name__)
@@ -39,7 +39,7 @@ def halt():
 
 @app.route("/", methods=['GET'])
 def root_http():
-   return render_template('root.html', status=STATUS, disk_encryption=DISK_ENCRYPTION)
+   return render_template('root.html', status=STATUS, disk_encryption=DISK_ENCRYPTION, overlay_cansudo=OVERLAY_CANSUDO)
 
 @app.route('/static/bela_black.png')
 def static_bela():

@@ -28,6 +28,27 @@
 </form>
 {% endif %}
 
+{% if overlay_cansudo %}
+<form action="/network" method="GET">
+  <label for="overlay">Overlay:</label>
+  <select name="overlay">
+    <option value="restore">restore</option>
+    <option value="clear">clear</option>
+    <option value="tor">tor</option>
+    <option value="yggdrasil">yggdrasil</option>
+  </select>
+  <label for="action">Action:</label>
+  <select name="action">
+    <option value=" "> </option>
+    <option value="install">install</option>
+    <option value="uninstall">uninstall</option>
+    <option value="inbound">inbound</option>
+    <option value="outbound">outbound</option>
+  </select>
+  <input type="submit">
+</form>
+{% endif %}
+
 {% else %}
 <form action="/login" method="POST">
   <label for="password">Web Password</label>
