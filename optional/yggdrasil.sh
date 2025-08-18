@@ -34,6 +34,8 @@ inbound()
 	  sudo cp /etc/iptables/rules.v6 /etc/iptables/rules.v6_back
    fi
 
+   sudo sysctl -w net.ipv6.conf.all.forwarding=1
+
    # fs: 564, auth: 567, cpu: 17019 and 17029
    if [ $type = 'grid' ]; then
       sudo ip6tables -t nat -A PREROUTING -p tcp --dport 564 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:564
@@ -47,6 +49,7 @@ inbound()
       sudo ip6tables -t nat -A PREROUTING -p tcp --dport 17020 -j DNAT --to-destination [fdfc::5054:ff:fe00:ee03]:17020
    fi
    sudo sh -c '( ip6tables-save > /etc/iptables/rules.v6 )'
+   sudo sh -c '( echo "net.ipv6.conf.all.forwarding=1" > /etc/sysctl.d/belagos-darknet-sysctl.conf )'
 }
 
 uninstall()

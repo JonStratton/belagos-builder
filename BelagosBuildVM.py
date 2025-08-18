@@ -68,7 +68,7 @@ def get_alt_arch(arch):
    qemu_arch = arch
    if arch == 'x86_64':
       iso_arch = 'amd64'
-   elif arch == 'i686':
+   else:
       iso_arch = '386'
       qemu_arch = 'i386'
    return(iso_arch, qemu_arch)
@@ -106,7 +106,7 @@ def get_specs_user(config_file, arch):
    config = ConfigParser()
 
    glenda_pass = input("Enter password for glenda: ")
-   disk_gb = input("Disk for install(in GB): ")
+   disk_gb = input("Disk for install(in GB. Should be 10 or greater, or the installer may stop): ")
    disk_pass = input("Enter optional disk encryption password. If entered, this password will be required to boot: ")
 
    disk_encryption = 0
