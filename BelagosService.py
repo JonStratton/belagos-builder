@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import os, threading, subprocess
 import BelagosLib as bl
-from flask import Flask, request, session, render_template, send_from_directory, redirect, url_for
+from flask import Flask, request, render_template, send_from_directory, redirect, url_for
 from configparser import ConfigParser
+import uuid
 
 CONFIG = ConfigParser()
 CONFIG.read('BelagosService.conf')
@@ -20,6 +21,8 @@ VM_TO_EXP = {};
 STATUS = 'preboot';
 DISK_PASSWORD = '';
 GLENDA_PASSWORD = '';
+UUID = uuid.uuid1(); # Mothra cannot do cookies, so we fudge it with a hard to find path generated at start
+
 
 def boot():
    global STATUS
@@ -39,34 +42,28 @@ def halt():
 
 @app.route("/", methods=['GET'])
 def root_http():
-   return render_template('root.html', status=STATUS, disk_encryption=DISK_ENCRYPTION, overlay_cansudo=OVERLAY_CANSUDO)
+   return render_template('login.html')
 
-@app.route('/static/bela_black.png')
+@app.route('/static/bela_black.jpg')
 def static_bela():
-   return send_from_directory('', 'bela_black.png')
+   return send_from_directory('', 'bela_black.jpg')
 
 @app.route("/login", methods=['POST'])
 def login_http():
    if (request.values.get('password') and (request.values.get('password') == WEB_PASSWORD)):
-      session['logged_in'] = True
-      return redirect(url_for('root_http'))
+      return redirect(url_for('admin_http'))
    return 'Unauthorized', 401
 
-@app.route("/logout")
-def logout_http():
-   session['logged_in'] = False
-   return redirect(url_for('root_http'))
+@app.route("/%s" % UUID)
+def admin_http():
+   return render_template('admin.html', uuid=UUID, status=STATUS, disk_encryption=DISK_ENCRYPTION, overlay_cansudo=OVERLAY_CANSUDO)
 
-@app.route("/status")
+@app.route("/%s/status" % UUID)
 def status_http():
-   if not session.get('logged_in'):
-      return 'Unauthorized', 401
    return STATUS
 
-@app.route("/network", methods=['GET', 'POST'])
+@app.route("/%s/network" % UUID, methods=['GET', 'POST'])
 def network_http():
-   if not session.get('logged_in'):
-      return 'Unauthorized', 401
    overlay = request.values.get('overlay')
    action = request.values.get('action')
    if overlay not in OVERLAY_SCRIPTS:
@@ -75,30 +72,24 @@ def network_http():
       return 'Bad Request', 400
    command = OVERLAY_SCRIPTS.get(overlay)
    commandReturn = subprocess.run(["sudo", command, action], capture_output=True, text=True).stdout
-   return redirect(url_for('root_http'))
+   return redirect(url_for('admin_http'))
 
-@app.route("/password", methods=['POST'])
+@app.route("/%s/password" % UUID, methods=['POST'])
 def disk_password_http():
-   if not session.get('logged_in'):
-      return 'Unauthorized', 401
    global DISK_PASSWORD, GLENDA_PASSWORD
    DISK_PASSWORD = request.values.get('disk_password')
    GLENDA_PASSWORD = request.values.get('glenda_password')
-   return redirect(url_for('root_http'))
+   return redirect(url_for('admin_http'))
 
-@app.route("/boot")
+@app.route("/%s/boot" % UUID)
 def boot_http():
-   if not session.get('logged_in'):
-      return 'Unauthorized', 401
    boot()
-   return redirect(url_for('root_http'))
+   return redirect(url_for('admin_http'))
 
-@app.route("/halt")
+@app.route("/%s/halt" % UUID)
 def halt_http():
-   if not session.get('logged_in'):
-      return 'Unauthorized', 401
    halt()
-   return redirect(url_for('root_http'))
+   return redirect(url_for('admin_http'))
 
 if __name__ == '__main__':
    commandReturn = subprocess.run(["sudo", "-ln"], capture_output=True, text=True).stdout
@@ -109,6 +100,5 @@ if __name__ == '__main__':
       boot_thread = threading.Thread(target=boot, args=())
       boot_thread.start()
 
-   app.secret_key = os.urandom(12)
    app.run(host='192.168.9.1', port=5000)
 

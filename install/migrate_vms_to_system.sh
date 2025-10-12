@@ -17,7 +17,7 @@ sudo usermod -a -G kvm belagos
 sudo mkdir /opt/belagos/
 sudo mkdir /opt/belagos/optional/
 sudo mkdir /opt/belagos/templates/
-sudo cp bela_black.png /opt/belagos/
+sudo cp bela_black.jpg /opt/belagos/
 sudo cp BelagosService.py /opt/belagos/
 sudo cp BelagosLib.py /opt/belagos/
 sudo cp optional/* /opt/belagos/optional/

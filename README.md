@@ -1,4 +1,4 @@
-![BelaGOS Logo](bela_black.png?raw=true)
+![BelaGOS Logo](bela_black.jpg?raw=true)
 # belagos-builder
 Turns a Debian install into BelagOS. Currently this is some shell and Expect scripts to build some 9front VMs.
 

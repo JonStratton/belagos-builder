@@ -27,3 +27,7 @@ sudo ip6tables -t nat -F
 sudo ip6tables -t mangle -F
 sudo ip6tables -F
 sudo ip6tables -X
+
+# Temp fix: bounce "belagos_find_internet" to rebuilt those IP table rules after they are cleared.
+# This should fail / error unless the service has been installed on the system
+systemctl restart belagos_find_internet.service
