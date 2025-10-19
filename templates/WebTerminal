@@ -1,0 +1,7 @@
+<form action="/{{uuid}}/terminal" method="POST">
+  <h3>Web Terminal</h3>
+  <!--<textarea name="output" rows="24" cols="80">{{terminalOutput}}</textarea><br />-->
+  <pre>{{pluginState.WebTerminal}}</pre>
+  <input type="text" name="cmd" size="60">
+  <input type="submit" value="Enter">
+</form><br />

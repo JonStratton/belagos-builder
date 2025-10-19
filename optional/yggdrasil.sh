@@ -11,7 +11,7 @@ outbound()
    fi
 
    if [ ! -f "/etc/iptables/rules.v6_back" ]; then
-	  sudo cp /etc/iptables/rules.v6 /etc/iptables/rules.v6_back
+      sudo cp /etc/iptables/rules.v6 /etc/iptables/rules.v6_back
    fi
 
    sudo ip6tables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
@@ -31,7 +31,7 @@ inbound()
    fi
 
    if [ ! -f "/etc/iptables/rules.v6_back" ]; then
-	  sudo cp /etc/iptables/rules.v6 /etc/iptables/rules.v6_back
+      sudo cp /etc/iptables/rules.v6 /etc/iptables/rules.v6_back
    fi
 
    sudo sysctl -w net.ipv6.conf.all.forwarding=1
@@ -84,14 +84,30 @@ interface tap0
    sudo systemctl restart radvd
 }
 
+manage()
+{
+   setfacl -m g:belagos:rwx /etc/yggdrasil
+   setfacl -m g:belagos:rw /etc/yggdrasil/yggdrasil.conf
+}
+
+unmanage()
+{
+   setfacl -x g:belagos /etc/yggdrasil/yggdrasil.conf
+   setfacl -x g:belagos /etc/yggdrasil
+}
+
 if [ $1 -a $1 = 'outbound' ]; then
-   outbound
+/etc/yggdrasil/yggdrasil.conf   outbound
 elif [ $1 -a $1 = 'inbound' ]; then
    inbound
 elif [ $1 -a $1 = 'uninstall' ]; then
    uninstall
 elif [ $1 -a $1 = 'install' ]; then
    install
+elif [ $1 -a $1 = 'manage' ]; then
+   manage
+elif [ $1 -a $1 = 'unmanage' ]; then
+   unmanage
 else
    echo "$0 install|uninstall|inbound|outbound"
 fi

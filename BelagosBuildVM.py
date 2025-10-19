@@ -19,7 +19,7 @@ def main():
 
    # Download the iso if not installed
    local_iso = '9front.%s.iso' % (iso_arch)
-   remote_iso_reg = re.compile('9front-\d+.%s.iso.gz' % (iso_arch)) # 9front-10522.amd64.iso.gz
+   remote_iso_reg = re.compile(r'9front-\d+.%s.iso.gz' % (iso_arch)) # 9front-10522.amd64.iso.gz
    if not os.path.exists(local_iso):
       get_iso("http://9front.org/iso/", remote_iso_reg, local_iso)
 
@@ -125,7 +125,7 @@ def get_specs_user(config_file, arch):
          main_core = input("RAM for fsserve(MB): ")
          authserve_core = input("RAM for authserve(MB): ")
          cpuserve_core = input("RAM for cpuserve(MB): ")
-         config['main'] = {'order': 'main_vm auth_vm cpu_vm', 'autostart': autostart, 'disk_encryption': disk_encryption, 'type': installType, 'web_password': web_pass}
+         config['main'] = {'order': 'main_vm auth_vm cpu_vm', 'autostart': autostart, 'disk_encryption': disk_encryption, 'type': installType, 'web_password': web_pass, 'plugins': 'WebTerminal'}
          config['main_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -nographic' % (arch, main_core, DISK_MAIN)}
          if disk_encryption:
             config['auth_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:04 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -boot n -nographic' % (arch, authserve_core)}
@@ -135,7 +135,7 @@ def get_specs_user(config_file, arch):
             config['cpu_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:05 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -boot n -nographic' % (arch, cpuserve_core, DISK_CPU)}
       else:
          main_core = input("RAM for install(MB): ")
-         config['main'] = {'order': 'main_vm', 'autostart': autostart, 'disk_encryption': disk_encryption, 'type': installType, 'web_password': web_pass}
+         config['main'] = {'order': 'main_vm', 'autostart': autostart, 'disk_encryption': disk_encryption, 'type': installType, 'web_password': web_pass, 'plugins': 'WebTerminal'}
          config['main_vm'] = {'command': 'qemu-system-%s -m %s -net nic,macaddr=52:54:00:00:EE:03 -net vde,sock=/var/run/vde2/tap0.ctl -device virtio-scsi-pci,id=scsi -drive if=none,id=vd0,file=%s -device scsi-hd,drive=vd0 -nographic' % (arch, main_core, DISK_MAIN)}
    
       # Write the configuration to a file

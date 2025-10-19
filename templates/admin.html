@@ -28,24 +28,43 @@
 {% endif %}
 
 {% if overlay_cansudo %}
-<form action="/{{uuid}}/network" method="GET">
-  <label for="overlay">Overlay:</label>
-  <select name="overlay">
-    <option value="restore">restore</option>
-    <option value="clear">clear</option>
-    <option value="tor">tor</option>
-    <option value="yggdrasil">yggdrasil</option>
-  </select>
-  <label for="action">Action:</label>
-  <select name="action">
-    <option value=" "> </option>
-    <option value="install">install</option>
-    <option value="uninstall">uninstall</option>
-    <option value="inbound">inbound</option>
-    <option value="outbound">outbound</option>
-  </select>
-  <input type="submit">
-</form>
+<form action="/{{uuid}}/network" method="POST">
+  <h2>Networking</h2>
+  <h3>Inbound</h3>
+  <input type="radio" id="in_default" name="inbound" value="default">
+  <label for="in_default">Default</label><br>
+
+  {% if "tor" in pluginsEnabled %}
+  <input type="radio" id="in_tor" name="inbound" value="tor">
+  <label for="in_tor">Tor</label><br>
+  {% endif %}
+
+  {% if "yggdrasil" in pluginsEnabled %}
+  <input type="radio" id="in_yggdrasil" name="inbound" value="yggdrasil">
+  <label for="in_yggdrasil">Yggdrasil</label><br>
+  {% endif %}
+
+  <h3>Outbound</h3>
+  <input type="radio" id="out_default" name="outbound" value="default">
+  <label for="out_default">Default</label><br>
+
+  {% if "tor" in pluginsEnabled %}
+  <input type="radio" id="out_tor" name="outbound" value="tor">
+  <label for="out_tor">Tor</label><br>
+  {% endif %}
+
+  {% if "yggdrasil" in pluginsEnabled %}
+  <input type="radio" id="out_yggdrasil" name="outbound" value="yggdrasil">
+  <label for="out_yggdrasil">Yggdrasil</label><br>
+  {% endif %}
+
+  <input type="submit" value="Save">
+</table><br />
 {% endif %}
+
+<h2>Plugins</h2>
+{% for plugin in plugins %}
+   {% include plugin %}
+{% endfor %}
 
 </html>

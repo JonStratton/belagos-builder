@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-import os, threading, subprocess
+import os, threading, subprocess, sys
 import BelagosLib as bl
 from flask import Flask, request, render_template, send_from_directory, redirect, url_for
 from configparser import ConfigParser
 import uuid
+import importlib
+sys.path.append('plugins')
 
 CONFIG = ConfigParser()
 CONFIG.read('BelagosService.conf')
@@ -11,18 +13,22 @@ VM_ORDER = CONFIG.get('main', 'order').split()
 WEB_PASSWORD = CONFIG.get('main', 'web_password')
 AUTOSTART = int(CONFIG.get('main', 'autostart'))
 DISK_ENCRYPTION = int(CONFIG.get('main', 'disk_encryption'))
-OVERLAY_CANSUDO = False
-OVERLAY_SCRIPTS = {"clear":"optional/clearnet.sh","tor":"optional/tor.sh","yggdrasil":"optional/yggdrasil.sh","restore":"optional/restore.sh"}
-OVERLAY_ACTIONS = ("install", "uninstall", "inbound", "outbound", " ")
+PLUGINS = CONFIG.get('main', 'plugins').split()
+CANSUDO = False
+PLUGIN_SCRIPTS = {"internet":"optional/clearnet.sh","tor":"optional/tor.sh","yggdrasil":"optional/yggdrasil.sh","mesh":"optional/mesh-micro.sh"}
+PLUGIN_CHECK_SERVICE = {"internet":"belagos_find_internet","tor":"tor","yggdrasil":"yggdrasil","mesh":"mesh_micro"}
+PLUGIN_STATE = {}
 
 # Globals
 app = Flask(__name__)
-VM_TO_EXP = {};
-STATUS = 'preboot';
-DISK_PASSWORD = '';
-GLENDA_PASSWORD = '';
-UUID = uuid.uuid1(); # Mothra cannot do cookies, so we fudge it with a hard to find path generated at start
+VM_TO_EXP = {}
+STATUS = 'preboot'
+DISK_PASSWORD = ''
+GLENDA_PASSWORD = ''
+UUID = uuid.uuid1()
 
+for plugin in PLUGINS:
+   module = importlib.import_module(plugin, package=None)
 
 def boot():
    global STATUS
@@ -56,7 +62,12 @@ def login_http():
 
 @app.route("/%s" % UUID)
 def admin_http():
-   return render_template('admin.html', uuid=UUID, status=STATUS, disk_encryption=DISK_ENCRYPTION, overlay_cansudo=OVERLAY_CANSUDO)
+   pluginsEnabled = {}
+   for plugin in PLUGIN_CHECK_SERVICE.keys():
+      commandReturn = subprocess.run(['systemctl', 'status', PLUGIN_CHECK_SERVICE.get(plugin)], capture_output=True, text=True).stdout
+      if (subprocess.run(['systemctl', 'status', PLUGIN_CHECK_SERVICE.get(plugin)], capture_output=True, text=True).stdout):
+         pluginsEnabled[plugin] = 1
+   return render_template('admin.html', uuid=UUID, status=STATUS, disk_encryption=DISK_ENCRYPTION, cansudo=CANSUDO, pluginsEnabled=pluginsEnabled, plugins=PLUGINS, pluginState=PLUGIN_STATE)
 
 @app.route("/%s/status" % UUID)
 def status_http():
@@ -64,14 +75,18 @@ def status_http():
 
 @app.route("/%s/network" % UUID, methods=['GET', 'POST'])
 def network_http():
-   overlay = request.values.get('overlay')
-   action = request.values.get('action')
-   if overlay not in OVERLAY_SCRIPTS:
-      return 'Bad Request', 400
-   if action not in OVERLAY_ACTIONS:
-      return 'Bad Request', 400
-   command = OVERLAY_SCRIPTS.get(overlay)
-   commandReturn = subprocess.run(["sudo", command, action], capture_output=True, text=True).stdout
+   subprocess.run(["sudo", 'optional/restore.sh'], capture_output=True, text=True).stdout
+
+   inbound = request.values.get('inbound')
+   if (inbound != 'default'):
+      inboundCmd = PLUGIN_SCRIPTS.get(inbound)
+      subprocess.run(["sudo", inboundCmd, 'inbound'], capture_output=True, text=True).stdout
+
+   outbound = request.values.get('outbound')
+   if (outbound != 'default'):
+      outboundCmd = PLUGIN_SCRIPTS.get(outbound)
+      subprocess.run(["sudo", outboundCmd, 'outbound'], capture_output=True, text=True).stdout
+
    return redirect(url_for('admin_http'))
 
 @app.route("/%s/password" % UUID, methods=['POST'])
@@ -94,7 +109,7 @@ def halt_http():
 if __name__ == '__main__':
    commandReturn = subprocess.run(["sudo", "-ln"], capture_output=True, text=True).stdout
    if 'optional/restore.sh' in commandReturn:
-      OVERLAY_CANSUDO = True
+      CANSUDO = True
 
    if AUTOSTART:
       boot_thread = threading.Thread(target=boot, args=())
