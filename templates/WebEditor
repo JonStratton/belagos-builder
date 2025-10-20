@@ -1,0 +1,7 @@
+<h3>Web Editor</h3>
+<form action="/{{uuid}}/editor" method="POST">
+  <input type="text" name="infile" value="{{pluginState.WebEditor.File}}">
+  <input type="submit" name="read" value="read"><br />
+  <textarea name="savetext" rows="24" cols="80">{{pluginState.WebEditor.Contents}}</textarea>
+  <input type="submit" name="write" value="write">
+</form>

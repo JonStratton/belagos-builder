@@ -2,9 +2,6 @@
 import os, threading, subprocess
 from flask import Flask, request, redirect, url_for
 
-TERMINAL_OUTPUT = ''
-#STATE = {}
-
 # If Called directly, stub out app. Otherwise, import from caller
 if __name__ == '__main__':
    app = Flask(__name__)
