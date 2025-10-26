@@ -22,7 +22,7 @@ def plugins_editorLoad():
    PLUGIN_STATE['WebEditor']['File'] = infile
    PLUGIN_STATE['WebEditor']['Contents'] = savetext
 
-   if ((read) and (infile)):
+   if ((read) and (infile) and (os.path.isfile(infile))):
       file = open(infile, "r")
       PLUGIN_STATE['WebEditor']['Contents'] = file.read()
       file.close()

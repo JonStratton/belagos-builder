@@ -9,14 +9,59 @@
 
 cd $home/tmp
 
-# 9front rio.amber
-tar xzf /n/extra/src/rio.amber.tgz
-cd rio.amber
-./install
-mv /bin/rio /bin/rio.snore
-mv /bin/rio.amber /bin/rio
+# rio.themes
+tar xzf /n/extra/src/rio.themes.tgz
+cd rio.themes
+mk
+mk install
 cd ..
-rm -rf rio.amber
+rm -rf rio.themes
+
+# tacme. Pull the new version as ape/patch seems to be gone now. Pull from shithub
+webfs
+hget https://hjgit.org/git/jgstratt/acme-themes/d2343dd3180c09ab2508297f32bd6aa510feafbc/snap.tar.gz > acme-themes.tar.gz
+tar xzf acme-themes.tar.gz
+cd acme-themes
+mk
+mk install
+cd ..
+rm -rf rio.themes
+
+# Themes
+mkdir /lib/themes
+echo 'rioback	000000
+back	000000
+high	eeff00
+border	808800
+text	eeff00
+htext	000000
+title	eeff00
+ltitle	808800
+hold	ffffff
+lhold	ffffff
+palehold	ffffff
+paletext	808800
+size	ff0000
+menubar	eeff00
+menuback	000000
+menuhigh	eeff00
+menubord	808800
+menutext	eeff00
+menuhtext	000000' >  /lib/themes/amber.txt
+
+# Profile - patch for rio-themes
+cp $home/lib/profile $home/lib/profile_9front
+sed 's/rio -i/rio.themes -i/g' $home/lib/profile > $home/lib/profile2
+sed 's/fn cpu\%\{ \$\* \}/fn cpu\%\{ \$\* \}\n	rio.themes -i riostart/g' $home/lib/profile2 > $home/lib/profile
+rm $home/lib/profile2
+
+# Rio Start
+echo '#!/bin/rc
+window ''cat /lib/themes/amber.txt > /dev/theme''
+window -r 0 94 214 477
+window -r 0 0 151 91 stats.amber -lm
+window -r 217 0 738 477' > $home/bin/rc/riostart
+chmod 755 $home/bin/rc/riostart
 
 # 9front vt.green
 tar xzf /n/extra/src/vt.green.tgz
