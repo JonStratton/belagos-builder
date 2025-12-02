@@ -68,8 +68,9 @@ install()
    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y dnsmasq
 
    # Create dnsmasq config for tap0
-   sudo sh -c '( echo "interface=tap0
-   expand-hosts" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
+   sudo sh -c '( echo "bind-interfaces
+interface=tap0
+expand-hosts" > /etc/dnsmasq.d/belagos-dnsmasq.conf )'
    sudo systemctl enable dnsmasq
    sudo systemctl restart dnsmasq
 }
