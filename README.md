@@ -1,4 +1,7 @@
 ![BelaGOS Logo](bela_black.jpg?raw=true)
+
+This project has moved. To get the latest version, pull from https://codeberg.org/JonStratton/belagos-builder
+
 # belagos-builder
 Turns a Debian install into BelaGOS. Currently this is some Python/Expect scripts to build some 9front VMs, and a Flask Service to optionally manage the VMs from inside of the VMs.
 
